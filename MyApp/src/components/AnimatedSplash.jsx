@@ -22,7 +22,7 @@ export default function AnimatedSplash({ onFinish, duration = 900 }) {
 	return (
 		<Animated.View style={[styles.container, { backgroundColor: colors.background, opacity: fade }]}>      
 			<Animated.View style={{ transform: [{ scale }] }}>
-				<Image source={require('../../assets/logo.jpg')} style={styles.logo} />
+				<Image source={require('../../assets/logo.png')} style={styles.logo} />
 			</Animated.View>
 		</Animated.View>
 	);

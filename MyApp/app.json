@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Delay Distractions - Chess Puzzles",
-    "slug": "delay-distractions",
+    "name": "Chess Screen Time - Puzzles",
+    "slug": "chess-screen-time-puzzles",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.jpg",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
@@ -12,14 +12,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo.jpg",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.jskarthik.delaydistractions"
     },
     "web": {
-      "favicon": "./assets/logo.jpg"
+      "favicon": "./assets/logo.png"
     },
     "extra": {
       "eas": {
