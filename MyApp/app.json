@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Delay Distractions - Chess Puzzles",
+    "slug": "delay-distractions",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.jpg",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.jpg",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.jskarthik.delaydistractions"
+    },
+    "web": {
+      "favicon": "./assets/logo.jpg"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a4d5d2d7-741c-41c7-9a89-37ac7e140548",
+        "SUPABASE_URL": "https://terpokuczrfsyblwjgjo.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcnBva3VjenJmc3libHdqZ2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1ODExMDcsImV4cCI6MjA4MDE1NzEwN30.9kOWez0CNFh8qILGY4lV9R5uvsOB2MTg34OJ5T_qUKI"
+      }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}
