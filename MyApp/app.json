@@ -24,10 +24,20 @@
     "extra": {
       "eas": {
         "SUPABASE_URL": "https://terpokuczrfsyblwjgjo.supabase.co",
-        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcnBva3VjenJmc3libHdqZ2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1ODExMDcsImV4cCI6MjA4MDE1NzEwN30.9kOWez0CNFh8qILGY4lV9R5uvsOB2MTg34OJ5T_qUKI"
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcnBva3VjenJmc3libHdqZ2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1ODExMDcsImV4cCI6MjA4MDE1NzEwN30.9kOWez0CNFh8qILGY4lV9R5uvsOB2MTg34OJ5T_qUKI",
+        "projectId": "6a5398a4-6757-4f9d-9e92-06587cdd9875"
       }
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/logo2.png",
+          "imageWidth": 200, 
+          "resizeMode": "contain"
+        }
+      ],
       "expo-secure-store"
     ]
   }
