@@ -4,6 +4,7 @@ import { useThemeColors, useThemedStyles } from '../../theme/ThemeContext';
 import BoardPager from '../../components/BoardPager';
 import { trendingPuzzles, practicePuzzles } from '../../data/puzzles';
 import { refreshPuzzles } from '../../data/puzzles';
+import { startNoScrollReminder, stopNoScrollReminder } from '../../services/notifications';
 
 const styleFactory = (colors) => StyleSheet.create({
   container: { flex: 1, alignItems: 'stretch', justifyContent: 'center', paddingHorizontal: 0, paddingVertical: 0, backgroundColor: colors.background },
@@ -17,6 +18,8 @@ export default function HomeScreen({ mode = 'Trending' }) {
 
   React.useEffect(() => {
     let mounted = true;
+    // Start periodic reminder when screen is mounted
+    startNoScrollReminder(0.1 * 60 * 1000); // 6 seconds for testing
     (async () => {
       try {
         await refreshPuzzles();
@@ -26,7 +29,7 @@ export default function HomeScreen({ mode = 'Trending' }) {
         setPracticeData([...practicePuzzles]);
       } catch {}
     })();
-    return () => { mounted = false; };
+    return () => { mounted = false; stopNoScrollReminder(); };
   }, []);
 
   return (
