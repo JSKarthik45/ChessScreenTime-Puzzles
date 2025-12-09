@@ -145,11 +145,11 @@ export async function setTheme(theme) {
   } catch {}
 }
 
-export async function setChessUsername(username) {
+export async function setChessUsername(username = "") {
   try { await AsyncStorage.setItem(KEYS.chessUsername, username || ''); } catch {}
 }
 
-export async function setChessTacticsRating(rating) {
+export async function setChessTacticsRating(rating = 1500) {
   try { if (rating != null) await AsyncStorage.setItem(KEYS.chessTacticsRating, String(rating)); } catch {}
 }
 

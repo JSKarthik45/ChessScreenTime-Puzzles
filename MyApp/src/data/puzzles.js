@@ -23,6 +23,16 @@ export const practicePuzzles = [];
 
 // Optional helper if a component wants to refresh manually
 export async function refreshPuzzles({ afterTrendingId = null, afterPracticeId = null } = {}) {
+  // If caller doesn't specify offsets, continue from latest viewed IDs
+  if (afterTrendingId == null || afterPracticeId == null) {
+    const [lastT, lastP] = await Promise.all([
+      afterTrendingId == null ? getLatestPuzzleId('TrendingPuzzles') : Promise.resolve(afterTrendingId),
+      afterPracticeId == null ? getLatestPuzzleId('PracticePuzzles') : Promise.resolve(afterPracticeId),
+    ]);
+    afterTrendingId = lastT;
+    afterPracticeId = lastP;
+  }
+
   const [t, p] = await Promise.all([
     getPuzzlesData('TrendingPuzzles', 10, afterTrendingId),
     getPuzzlesData('PracticePuzzles', 10, afterPracticeId),

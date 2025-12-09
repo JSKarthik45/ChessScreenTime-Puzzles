@@ -19,7 +19,7 @@ export default function HomeScreen({ mode = 'Trending' }) {
   React.useEffect(() => {
     let mounted = true;
     // Start periodic reminder when screen is mounted
-    startNoScrollReminder(0.1 * 60 * 1000); // 6 seconds for testing
+    startNoScrollReminder(2 * 60 * 1000); // 2 minutes
     (async () => {
       try {
         await refreshPuzzles();

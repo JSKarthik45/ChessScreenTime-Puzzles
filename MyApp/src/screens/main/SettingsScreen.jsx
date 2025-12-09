@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, Linking, Moda
 import { Ionicons } from '@expo/vector-icons';
 import { useThemedStyles, useThemeColors } from '../../theme/ThemeContext';
 import { loadPreferences, savePreferences, setTheme, setChessUsername as saveChessUsername, setChessTacticsRating, clearChessImport } from '../../storage/preferences';
+import { scheduleDailyNoScrollNotification } from '../../services/notifications';
 import { useThemeController } from '../../theme/ThemeContext';
 
 // No app toggles; replaced by time window selection UI
@@ -210,13 +211,20 @@ export default function SettingsScreen() {
     setPickerVisible(true);
   };
 
-  const commitPicker = () => {
+  const commitPicker = async () => {
     const h24 = (tmpHour % 12) + (tmpAmPm === 'PM' ? 12 : 0);
     const mm = String(tmpMinute).padStart(2, '0');
     const value = `${String(h24).padStart(2, '0')}:${mm}`;
     if (pickerTarget === 'from') setFromTime(value);
     else setToTime(value);
-    savePreferences({ problemTarget, fromTime: pickerTarget === 'from' ? value : fromTime, toTime: pickerTarget === 'to' ? value : toTime });
+    await savePreferences({
+      problemTarget,
+      fromTime: pickerTarget === 'from' ? value : fromTime,
+      toTime: pickerTarget === 'to' ? value : toTime,
+    });
+    try {
+      await scheduleDailyNoScrollNotification();
+    } catch {}
     setPickerVisible(false);
   };
 

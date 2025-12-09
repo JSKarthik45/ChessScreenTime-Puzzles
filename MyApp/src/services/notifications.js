@@ -82,6 +82,37 @@ async function shouldSendReminder() {
   return solved < (Number(problemTarget) || 5);
 }
 
+// --- Daily notification at start of no-scroll window ---
+
+export async function scheduleDailyNoScrollNotification() {
+  const ok = await ensureNotificationPermission();
+  if (!ok) return null;
+
+  const prefs = await loadPreferences();
+  const { fromTime } = prefs;
+  const parsed = parseHHMM(fromTime);
+  if (!parsed) return null;
+
+  const hour = parsed.h;
+  const minute = parsed.min;
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'No-scroll time ⏰',
+      body: 'Time to solve puzzles instead of scrolling.',
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+      repeats: true,
+    },
+  });
+
+  return id;
+}
+
 let reminderIntervalHandle = null;
 
 export function startNoScrollReminder(intervalMs = 1 * 60 * 1000) {
