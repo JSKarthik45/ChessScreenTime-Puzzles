@@ -9,7 +9,6 @@ import { lightNavigationTheme, darkNavigationTheme } from './src/theme';
 import { loadPreferences } from './src/storage/preferences';
 import { setThemePrimarySecondary } from './src/theme/colors';
 import { ThemeProvider, useThemeColors, useThemeController } from './src/theme/ThemeContext';
-import AppSplash from './src/components/AppSplash';
 
 import getPuzzlesData from './src/services/getData';
 
@@ -27,7 +26,6 @@ export default function App() {
   const [devSessionOnboarding, setDevSessionOnboarding] = useState(SHOW_ONBOARDING_ALWAYS);
 
   const [initialTheme, setInitialTheme] = useState(null);
-  const [minSplashElapsed, setMinSplashElapsed] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -48,14 +46,9 @@ export default function App() {
     init();
   }, []);
 
-  // Ensure splash is visible for at least 2 seconds, even if loading finishes earlier.
-  useEffect(() => {
-    const timer = setTimeout(() => setMinSplashElapsed(true), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!minSplashElapsed || loading) {
-    return <AppSplash />;
+  if (loading) {
+    // While loading preferences/onboarding flag, rely on the native Expo splash.
+    return null;
   }
 
   // In development, start with onboarding but allow exit on completion
