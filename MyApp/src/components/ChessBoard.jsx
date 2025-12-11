@@ -28,10 +28,10 @@ const iconNameFromType = {
 export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0, onMove }) {
   const squareSize = size / 8;
   const colors = useThemeColors();
-  const dark = colors.primary;
-  const light = colors.secondary;
-  const pieceColorWhite = '#ffffffff';
-  const pieceColorBlack = '#000000ff';
+  const dark = '#739552';  // light green
+  const light = '#ebecd0'; // light cream
+  const pieceColorWhite = '#f0f0f0';
+  const pieceColorBlack = '#101010';
   const highlightColor = '#5792ebff';
   const moveDotColor = '#5792ebff';
 
@@ -162,6 +162,7 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
   };
 
   return (
+    <View style={{ opacity: 0.99 }}>
     <View style={{ width: size, height: size, borderRadius, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border }}>
       {boardData.map((rank, r) => (
         <View key={`r-${r}`} style={{ flexDirection: 'row' }}>
@@ -180,6 +181,7 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
           })}
         </View>
       ))}
+    </View>
     </View>
   );
 }

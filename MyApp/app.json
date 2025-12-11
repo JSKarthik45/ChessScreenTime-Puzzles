@@ -35,15 +35,6 @@
       }
     },
     "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#000000",
-          "image": "./assets/logo2.png",
-          "imageWidth": 200,
-          "resizeMode": "contain"
-        }
-      ],
       "expo-secure-store",
       [
         "expo-notifications",

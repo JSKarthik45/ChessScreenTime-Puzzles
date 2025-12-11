@@ -15,20 +15,20 @@ export const palette = {
 export const lightColors = {
   primary: palette.primary,
   secondary: palette.secondary,
-  background: palette.background,
-  surface: palette.surface,
-  text: palette.text,
-  muted: palette.muted,
+  background: '#000000ff',
+  surface: '#383838ff',
+  text: '#e5e7eb',
+  muted: '#9ca3af',
   success: palette.success,
   warning: palette.warning,
   error: palette.error,
-  border: palette.border,
+  border: '#1f2937',
 };
 
 export const darkColors = {
   primary: palette.primary,
   secondary: palette.secondary,
-  background: '#ffffffff',
+  background: '#000000ff',
   surface: '#383838ff',
   text: '#e5e7eb',
   muted: '#9ca3af',

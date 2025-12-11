@@ -93,9 +93,30 @@ export async function loadPreferences() {
     const blocked = blockedStr ? JSON.parse(blockedStr) : {};
     const problemTarget = targetStr ? Number(targetStr) : 5;
     const theme = (primary && secondary) ? { key: themeKey || 'classic', primary, secondary } : null;
-    return { blocked, problemTarget, fromTime: fromTime || '', toTime: toTime || '', theme, chessUsername: chessUsername || '', chessTacticsRating: chessRating ? Number(chessRating) : null };
+
+    // Default no-scroll window if user hasn't set times: 12:00 AM to 10:00 PM.
+    const effectiveFromTime = fromTime || '00:00';
+    const effectiveToTime = toTime || '22:00';
+
+    return {
+      blocked,
+      problemTarget,
+      fromTime: effectiveFromTime,
+      toTime: effectiveToTime,
+      theme,
+      chessUsername: chessUsername || '',
+      chessTacticsRating: chessRating ? Number(chessRating) : null,
+    };
   } catch (e) {
-    return { blocked: {}, problemTarget: 5, fromTime: '', toTime: '', theme: null, chessUsername: '', chessTacticsRating: null };
+    return {
+      blocked: {},
+      problemTarget: 5,
+      fromTime: '00:00',
+      toTime: '22:00',
+      theme: null,
+      chessUsername: '',
+      chessTacticsRating: null,
+    };
   }
 }
 
