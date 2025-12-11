@@ -58,7 +58,17 @@
           "backgroundFetch": true
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "manifestPlaceholders": {
+              "android:forceDarkAllowed": "false"
+            }
+          }
+        }
+      ]
     ]
   }
 }

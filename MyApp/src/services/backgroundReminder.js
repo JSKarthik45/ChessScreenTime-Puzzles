@@ -39,8 +39,8 @@ TaskManager.defineTask(TASK_NAME, async () => {
     if (ok && (await shouldSend())) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Background Task Notification! ♟️',
-          body: 'Finish your daily puzzle goal.',
+          title: 'Don\'t scroll!',
+          body: 'Solve some puzzles instead of scrolling.',
           sound: 'default',
         },
         trigger: null,

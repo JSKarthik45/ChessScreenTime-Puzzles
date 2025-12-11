@@ -9,8 +9,6 @@ import { lightNavigationTheme, darkNavigationTheme } from './src/theme';
 import { loadPreferences } from './src/storage/preferences';
 import { setThemePrimarySecondary } from './src/theme/colors';
 import { ThemeProvider, useThemeColors, useThemeController } from './src/theme/ThemeContext';
-import ThickSpinner from './src/components/ThickSpinner';
-import AnimatedSplash from './src/components/AnimatedSplash';
 
 import getPuzzlesData from './src/services/getData';
 
@@ -22,7 +20,6 @@ const ONBOARDING_KEY = 'hasOnboarded';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [splashDone, setSplashDone] = useState(false);
   const [hasOnboarded, setHasOnboarded] = useState(false);
   // In dev, start in onboarding even if stored as completed,
   // but allow switching to app after finishing within the session.
@@ -48,18 +45,9 @@ export default function App() {
     };
     init();
   }, []);
-
-  // Show animated splash first, while we also load onboarding state.
-  if (!splashDone) {
-    return <AnimatedSplash onFinish={() => setSplashDone(true)} />;
-  }
-
   if (loading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ThickSpinner size={110} thickness={12} />
-      </View>
-    );
+    // While loading preferences/onboarding flag, rely on the native Expo splash.
+    return null;
   }
 
   // In development, start with onboarding but allow exit on completion

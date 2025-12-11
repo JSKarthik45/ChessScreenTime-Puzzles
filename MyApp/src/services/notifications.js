@@ -98,7 +98,7 @@ export async function scheduleDailyNoScrollNotification() {
 
   const id = await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'No-scroll time ⏰',
+      title: 'No-scroll time',
       body: 'Time to solve puzzles instead of scrolling.',
       priority: Notifications.AndroidNotificationPriority.HIGH,
     },
@@ -124,7 +124,7 @@ export function startNoScrollReminder(intervalMs = 1 * 60 * 1000) {
       if (send) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'Keep going! ♟️',
+            title: 'Keep going!',
             body: 'Finish your daily puzzle goal.',
             priority: Notifications.AndroidNotificationPriority.HIGH,
           },
