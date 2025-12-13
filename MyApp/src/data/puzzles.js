@@ -16,7 +16,6 @@ export const practicePuzzles = [];
     getPuzzlesData('TrendingPuzzles', 10, lastT),
     getPuzzlesData('PracticePuzzles', 10, lastP),
   ]);
-    // logs removed
     trendingPuzzles.splice(0, trendingPuzzles.length, ...t);
     practicePuzzles.splice(0, practicePuzzles.length, ...p);
 })();
@@ -37,7 +36,6 @@ export async function refreshPuzzles({ afterTrendingId = null, afterPracticeId =
     getPuzzlesData('TrendingPuzzles', 10, afterTrendingId),
     getPuzzlesData('PracticePuzzles', 10, afterPracticeId),
   ]);
-  // logs removed
   trendingPuzzles.splice(0, trendingPuzzles.length, ...t);
   practicePuzzles.splice(0, practicePuzzles.length, ...p);
   return { trendingPuzzles, practicePuzzles };

@@ -2,30 +2,9 @@ import { map } from 'lodash';
 import { supabase } from '../services/supabase';
 import { loadPreferences } from '../storage/preferences';
 
-async function getData(tableName, limit = 10, afterId = null) {
-    let query = supabase.from(tableName).select('*');
-    if (afterId != null) {
-        query = query.gt('id', afterId);
-    }
-    // Ensure deterministic order
-    query = query.order('id', { ascending: true }).limit(limit);
-    return await query;
-}
+const DEFAULT_BUCKET_SIZE = 100;
 
-
-function shuffleArray(rows) {
-    const arr = Array.isArray(rows) ? [...rows] : [];
-    for (let i = arr.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const tmp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = tmp;
-    }
-    return arr;
-}
-
-
-export async function getPuzzlesData(tableName, limit = 10, afterId = null) {
+export async function getPuzzlesData(tableName, limit = 10, rangeStart = null, rangeSize = DEFAULT_BUCKET_SIZE) {
     const mapRows = (rows) => (rows || []).map((row) => ({
         id: (typeof row.id === 'number' ? row.id : null),
         key: String(row.id ?? row.key ?? Math.random()),
@@ -51,23 +30,30 @@ export async function getPuzzlesData(tableName, limit = 10, afterId = null) {
         };
     });
 
-    // Try unified Puzzles table first
+    // Unified Puzzles table with optional id windows
     try {
+        const hasRange = typeof rangeStart === 'number' && Number.isFinite(rangeStart);
+        const bucketStart = hasRange ? rangeStart : 0;
+        const bucketSize = (typeof rangeSize === 'number' && Number.isFinite(rangeSize) && rangeSize > 0) ? rangeSize : DEFAULT_BUCKET_SIZE;
+        const lowerId = bucketStart;
+        const upperId = bucketStart + bucketSize;
+
         if (tableName === 'TrendingPuzzles') {
-            const overfetch = limit * 3;
             let q = supabase
                 .from('Puzzles')
-                .select('*')
+                .select('*');
+
+            if (hasRange) {
+                q = q.gte('id', lowerId).lt('id', upperId);
+            }
+
+            q = q
                 .order('popularity', { ascending: false })
                 .order('id', { ascending: true })
-                .limit(overfetch);
-            if (afterId != null) {
-                q = q.gt('id', afterId);
-            }
+                .limit(limit);
             const { data, error } = await q;
             if (!error && Array.isArray(data) && data.length > 0) {
-                const randomized = shuffleArray(data).slice(0, limit);
-                return mapRowsFromPuzzles(randomized);
+                return mapRowsFromPuzzles(data);
             }
         } else if (tableName === 'PracticePuzzles') {
             const prefs = await loadPreferences();
@@ -75,44 +61,45 @@ export async function getPuzzlesData(tableName, limit = 10, afterId = null) {
                 ? prefs.chessTacticsRating
                 : 1500;
             if (typeof rating === 'number' && Number.isFinite(rating)) {
-                const overfetch = limit * 3;
                 let q = supabase
                     .from('Puzzles')
-                    .select('*')
+                    .select('*');
+
+                if (hasRange) {
+                    q = q.gte('id', lowerId).lt('id', upperId);
+                }
+
+                q = q
                     .lte('lowestRating', rating)
                     .gte('highestRating', rating)
                     .order('id', { ascending: true })
-                    .limit(overfetch);
-                if (afterId != null) {
-                    q = q.gt('id', afterId);
-                }
+                    .limit(limit);
                 const { data, error } = await q;
                 if (!error && Array.isArray(data) && data.length > 0) {
-                    const randomized = shuffleArray(data).slice(0, limit);
-                    return mapRowsFromPuzzles(randomized);
+                    return mapRowsFromPuzzles(data);
                 }
             }
         } else {
-            const overfetch = limit * 3;
             let q = supabase
                 .from('Puzzles')
-                .select('*')
-                .order('id', { ascending: true })
-                .limit(overfetch);
-            if (afterId != null) {
-                q = q.gt('id', afterId);
+                .select('*');
+
+            if (hasRange) {
+                q = q.gte('id', lowerId).lt('id', upperId);
             }
+
+            q = q
+                .order('id', { ascending: true })
+                .limit(limit);
             const { data, error } = await q;
             if (!error && Array.isArray(data) && data.length > 0) {
-                const randomized = shuffleArray(data).slice(0, limit);
-                return mapRowsFromPuzzles(randomized);
+                return mapRowsFromPuzzles(data);
             }
         }
     } catch {
-        // Ignore and fall back
+        // Ignore and return empty on error
     }
 
-    // Fallback to existing table
-    const { data, error } = await getData(tableName, limit, afterId);
-    return error ? [] : mapRows(data);
+    // On error or no data, return empty array
+    return [];
 }

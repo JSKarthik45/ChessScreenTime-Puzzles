@@ -40,7 +40,7 @@
         {
           "backgroundColor": "#000000",
           "image": "./assets/logo2.png",
-          "imageWidth": 210,
+          "imageWidth": 205,
           "resizeMode": "contain"
         }
       ],

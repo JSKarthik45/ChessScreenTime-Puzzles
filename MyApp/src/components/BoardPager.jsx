@@ -4,12 +4,11 @@ import { View, FlatList, Dimensions } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useHeaderHeight } from '@react-navigation/elements';
 import BoardPanel from './BoardPanel';
-import { setLatestPuzzleId } from '../storage/preferences';
 const EMPTY_FEN = '8/8/8/8/8/8/8/8 w - - 0 1';
 
 // We will preload the NEXT board instead of a blank transition
 
-export default function BoardPager({ boards, transitionMode = 'blank', tableName = null }) {
+export default function BoardPager({ boards, transitionMode = 'blank', tableName = null, onIndexChange = null }) {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight() / 4;
   const headerHeight = useHeaderHeight() / 4;
@@ -72,14 +71,7 @@ export default function BoardPager({ boards, transitionMode = 'blank', tableName
           onAdvance={onAdvance}
           autoAdvance={false}
           boardId={board.key}
-          onMarkViewed={(bid) => {
-            try {
-              const numericId = typeof board.id === 'number' ? board.id : (Number(bid) || null);
-              if (tableName && numericId != null) {
-                setLatestPuzzleId(tableName, numericId);
-              }
-            } catch {}
-          }}
+          onMarkViewed={null}
         />
       </View>
     );
@@ -111,14 +103,13 @@ export default function BoardPager({ boards, transitionMode = 'blank', tableName
     const defer = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb) => setTimeout(cb, 0);
     defer(() => {
       setCurrentIdx(nextIdx);
-      // Persist latest viewed id per table if available
-      if (tableName && nextBoard && typeof nextBoard.id === 'number') {
-        try { setLatestPuzzleId(tableName, nextBoard.id); } catch {}
+      if (typeof onIndexChange === 'function') {
+        try { onIndexChange(nextIdx); } catch {}
       }
       setCommitPending(false);
       commitBoardRef.current = null;
     });
-  }, [currentIdx, source, tableName]);
+  }, [currentIdx, source, onIndexChange]);
 
   const onScrollEnd = useCallback((e) => {
     const y = e.nativeEvent.contentOffset.y;

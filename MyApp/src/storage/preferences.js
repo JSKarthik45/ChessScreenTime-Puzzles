@@ -12,7 +12,7 @@ const KEYS = {
   chessTacticsRating: 'dd_chess_tactics_rating',
 };
 
-// Latest viewed puzzle id per table
+// Current puzzle bucket start id per table (used for id windows)
 export const LATEST_KEYS = {
   TrendingPuzzles: 'dd_latest_trending_id',
   PracticePuzzles: 'dd_latest_practice_id',
@@ -24,7 +24,8 @@ export async function getLatestPuzzleId(tableName) {
     if (!key) return null;
     const raw = await AsyncStorage.getItem(key);
     const num = raw ? Number(raw) : null;
-    return Number.isFinite(num) ? num : null;
+    const value = Number.isFinite(num) ? num : null;
+    return value;
   } catch {
     return null;
   }

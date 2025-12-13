@@ -28,8 +28,8 @@ const iconNameFromType = {
 export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0, onMove }) {
   const squareSize = size / 8;
   const colors = useThemeColors();
-  const dark = '#739552';  // light green
-  const light = '#ebecd0'; // light cream
+  const dark = colors.primary;  // light green
+  const light = colors.secondary; // light cream
   const pieceColorWhite = '#f0f0f0';
   const pieceColorBlack = '#101010';
   const highlightColor = '#5792ebff';
