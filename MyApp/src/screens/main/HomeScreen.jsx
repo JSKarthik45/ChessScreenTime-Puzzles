@@ -52,7 +52,10 @@ export default function HomeScreen({ mode = 'Trending' }) {
           getPuzzlesData('PracticePuzzles', PAGE_SIZE, bucketP),
         ]);
 
-        // Fallback: if no practice puzzles in the current id window, try again from the start
+        // Fallbacks: if no puzzles in the current id window, try again from the start of the table
+        if (!Array.isArray(t) || t.length === 0) {
+          t = await getPuzzlesData('TrendingPuzzles', PAGE_SIZE, null);
+        }
         if (!Array.isArray(p) || p.length === 0) {
           p = await getPuzzlesData('PracticePuzzles', PAGE_SIZE, null);
         }

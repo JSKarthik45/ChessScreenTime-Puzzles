@@ -2,7 +2,7 @@
   "expo": {
     "name": "Chess Screen Time - Puzzles",
     "slug": "chess-screen-time-puzzles",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
@@ -40,7 +40,7 @@
         {
           "backgroundColor": "#000000",
           "image": "./assets/logo2.png",
-          "imageWidth": 205,
+          "imageWidth": 200,
           "resizeMode": "contain"
         }
       ],
