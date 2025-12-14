@@ -1,5 +1,5 @@
-import { DefaultTheme, DarkTheme } from '@react-navigation/native';
-import { lightColors, darkColors } from './colors';
+import { DefaultTheme } from '@react-navigation/native';
+import { lightColors } from './colors';
 
 export const spacing = {
   xs: 4,
@@ -30,17 +30,6 @@ export const lightTheme = {
   typography,
 };
 
-export const darkTheme = {
-  colors: darkColors,
-  spacing,
-  radius,
-  typography: {
-    ...typography,
-    subtitle: { fontSize: 16, color: darkColors.muted },
-    body: { fontSize: 14, color: darkColors.text },
-  },
-};
-
 export const lightNavigationTheme = {
   ...DefaultTheme,
   colors: {
@@ -53,16 +42,4 @@ export const lightNavigationTheme = {
   },
 };
 
-export const darkNavigationTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: darkColors.background,
-    card: darkColors.surface,
-    text: darkColors.text,
-    border: darkColors.border,
-    primary: darkColors.primary,
-  },
-};
-
-export { lightColors, darkColors };
+export { lightColors };

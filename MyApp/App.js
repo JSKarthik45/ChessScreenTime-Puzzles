@@ -5,7 +5,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import OnboardingNavigator from './src/navigation/OnboardingNavigator';
 import { OnboardingContext } from './src/navigation/OnboardingContext';
 import { NavigationContainer } from '@react-navigation/native';
-import { lightNavigationTheme, darkNavigationTheme } from './src/theme';
+import { lightNavigationTheme } from './src/theme';
 import { loadPreferences } from './src/storage/preferences';
 import { setThemePrimarySecondary } from './src/theme/colors';
 import { ThemeProvider, useThemeColors, useThemeController } from './src/theme/ThemeContext';
@@ -67,16 +67,16 @@ export default function App() {
   // Build a navigation theme each render after provider mounts so primary/secondary update.
   const ThemedNav = () => {
     const colors = useThemeColors();
-    // Clone a dark navigation theme but override primary + card + background colors.
+    // Clone a light navigation theme and override primary + card + background colors.
     const navTheme = {
-      ...darkNavigationTheme,
+      ...lightNavigationTheme,
       colors: {
-        ...darkNavigationTheme.colors,
+        ...lightNavigationTheme.colors,
         primary: colors.primary,
         card: colors.background,
         background: colors.background,
         text: colors.text,
-        border: colors.border || darkNavigationTheme.colors.border,
+        border: colors.border || lightNavigationTheme.colors.border,
       },
     };
     return (

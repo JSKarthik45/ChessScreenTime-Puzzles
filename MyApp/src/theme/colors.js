@@ -25,30 +25,15 @@ export const lightColors = {
   border: '#1f2937',
 };
 
-export const darkColors = {
-  primary: palette.primary,
-  secondary: palette.secondary,
-  background: '#000000ff',
-  surface: '#383838ff',
-  text: '#e5e7eb',
-  muted: '#9ca3af',
-  success: palette.success,
-  warning: palette.warning,
-  error: palette.error,
-  border: '#1f2937',
-};
-
 // Runtime setter to allow dynamic theme switching for primary/secondary.
 export function setThemePrimarySecondary(primary, secondary) {
   if (primary) {
     palette.primary = primary;
     palette.primaryDark = primary;
     lightColors.primary = primary;
-    darkColors.primary = primary;
   }
   if (secondary) {
     palette.secondary = secondary;
     lightColors.secondary = secondary;
-    darkColors.secondary = secondary;
   }
 }

@@ -96,8 +96,8 @@ export async function loadPreferences() {
     const theme = (primary && secondary) ? { key: themeKey || 'classic', primary, secondary } : null;
 
     // Default no-scroll window if user hasn't set times: 12:00 AM to 10:00 PM.
-    const effectiveFromTime = fromTime || '00:00';
-    const effectiveToTime = toTime || '22:00';
+    const effectiveFromTime = fromTime || '20:00';
+    const effectiveToTime = toTime || '22:30';
 
     return {
       blocked,
