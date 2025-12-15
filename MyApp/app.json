@@ -2,10 +2,10 @@
   "expo": {
     "name": "Chess Screen Time - Puzzles",
     "slug": "chess-screen-time-puzzles",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true

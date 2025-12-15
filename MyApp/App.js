@@ -4,8 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from './src/navigation/AppNavigator';
 import OnboardingNavigator from './src/navigation/OnboardingNavigator';
 import { OnboardingContext } from './src/navigation/OnboardingContext';
-import { NavigationContainer } from '@react-navigation/native';
-import { lightNavigationTheme } from './src/theme';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { loadPreferences } from './src/storage/preferences';
 import { setThemePrimarySecondary } from './src/theme/colors';
 import { ThemeProvider, useThemeColors, useThemeController } from './src/theme/ThemeContext';
@@ -67,16 +66,16 @@ export default function App() {
   // Build a navigation theme each render after provider mounts so primary/secondary update.
   const ThemedNav = () => {
     const colors = useThemeColors();
-    // Clone a light navigation theme and override primary + card + background colors.
     const navTheme = {
-      ...lightNavigationTheme,
+      ...DefaultTheme,
       colors: {
-        ...lightNavigationTheme.colors,
+        ...DefaultTheme.colors,
         primary: colors.primary,
-        card: colors.background,
         background: colors.background,
+        card: colors.background,
         text: colors.text,
-        border: colors.border || lightNavigationTheme.colors.border,
+        border: colors.border || DefaultTheme.colors.border,
+        notification: colors.primary,
       },
     };
     return (

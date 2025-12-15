@@ -2,19 +2,20 @@ import React, { useContext } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CircleButton from '../../components/CircleButton';
 import { OnboardingContext } from '../../navigation/OnboardingContext';
-import { lightTheme } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 
 export default function PermissionsScreen() {
   const { completeOnboarding } = useContext(OnboardingContext);
+  const colors = useThemeColors();
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { color: lightTheme.colors.text }]}>Permissions</Text>
-      <Text style={[styles.subtitle, { color: lightTheme.colors.muted }]}>Explain required app permissions here.</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Permissions</Text>
+      <Text style={[styles.subtitle, { color: colors.muted }]}>Explain required app permissions here.</Text>
 
       <CircleButton
         onPress={completeOnboarding}
         icon="checkmark"
-        backgroundColor={lightTheme.colors.success}
+        backgroundColor={colors.success}
         style={styles.fab}
       />
     </View>
@@ -22,7 +23,7 @@ export default function PermissionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: lightTheme.colors.background },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 24, fontWeight: '600' },
   subtitle: { marginTop: 8 },
   fab: {

@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CircleButton from '../../components/CircleButton';
-import { lightTheme } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 
 export default function WelcomeScreen({ navigation }) {
+  const colors = useThemeColors();
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { color: lightTheme.colors.text }]}>Welcome</Text>
-      <Text style={[styles.subtitle, { color: lightTheme.colors.muted }]}>Onboarding starts here.</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Welcome</Text>
+      <Text style={[styles.subtitle, { color: colors.muted }]}>Onboarding starts here.</Text>
 
       <CircleButton
         onPress={() => navigation.navigate('Permissions')}
@@ -19,7 +20,7 @@ export default function WelcomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: lightTheme.colors.background },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 24, fontWeight: '600' },
   subtitle: { marginTop: 8 },
   fab: {

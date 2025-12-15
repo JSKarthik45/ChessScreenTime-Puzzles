@@ -11,7 +11,7 @@ import { useThemeController } from '../../theme/ThemeContext';
 const styleFactory = (colors) => StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
   scrollContent: { paddingBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, color: colors.secondary },
+  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, color: colors.text },
   listContent: { paddingVertical: 3 },
   row: {
     flexDirection: 'row',
@@ -73,7 +73,7 @@ const styleFactory = (colors) => StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.primary,
   },
-  timePillLabel: { color: colors.secondary, marginBottom: 4 },
+  timePillLabel: { color: colors.text, marginBottom: 4 },
   timePillValue: { color: colors.text, fontWeight: '700', fontSize: 16 },
   linkLabel: { marginLeft: 12, fontSize: 16, color: colors.text, flex: 1 },
   linkIconRight: { marginLeft: 8 },

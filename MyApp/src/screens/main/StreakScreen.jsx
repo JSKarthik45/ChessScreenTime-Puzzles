@@ -12,8 +12,12 @@ const isoDay = (d = new Date()) => d.toISOString().substring(0, 10);
 const addDays = (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 
 const hexToRgb = (hex) => {
-	const clean = hex.replace('#', '');
-	const bigint = parseInt(clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean, 16);
+	let clean = (hex || '').replace('#', '');
+	// Support 8-digit hex with alpha suffix (e.g. RRGGBBAA or RRGGBBAA). Strip alpha.
+	if (clean.length === 8) clean = clean.substring(0, 6);
+	if (clean.length === 4) clean = clean.split('').map(c => c + c).join('');
+	if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+	const bigint = parseInt(clean, 16) || 0;
 	const r = (bigint >> 16) & 255;
 	const g = (bigint >> 8) & 255;
 	const b = bigint & 255;
