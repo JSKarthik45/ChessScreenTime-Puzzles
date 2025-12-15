@@ -2,7 +2,8 @@
   "expo": {
     "name": "Chess Screen Time - Puzzles",
     "slug": "chess-screen-time-puzzles",
-    "version": "1.1.0",
+    "scheme": "chessscreentime",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "automatic",
@@ -63,9 +64,7 @@
         "expo-build-properties",
         {
           "android": {
-            "manifestPlaceholders": {
-              "android:forceDarkAllowed": "false"
-            }
+            "forceDarkAllowed": false
           }
         }
       ]

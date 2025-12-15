@@ -21,7 +21,7 @@ export default function HomeScreen({ mode = 'Trending' }) {
   const [trendPrefetchedNext, setTrendPrefetchedNext] = React.useState(false);
   const [practicePrefetchedNext, setPracticePrefetchedNext] = React.useState(false);
 
-  const DEFAULT_BUCKET_START = 500;
+  const DEFAULT_BUCKET_START = 10000;
   const BUCKET_SIZE = 100;
   const PAGE_SIZE = 10;
   const PREFETCH_INDEX_IN_BATCH = 7; // 0-based index 7 => 8th puzzle
@@ -36,8 +36,14 @@ export default function HomeScreen({ mode = 'Trending' }) {
           getLatestPuzzleId('TrendingPuzzles'),
           getLatestPuzzleId('PracticePuzzles'),
         ]);
-        const bucketT = (typeof storedT === 'number' && Number.isFinite(storedT)) ? storedT : DEFAULT_BUCKET_START;
-        const bucketP = (typeof storedP === 'number' && Number.isFinite(storedP)) ? storedP : DEFAULT_BUCKET_START;
+        let bucketT = (typeof storedT === 'number' && Number.isFinite(storedT)) ? storedT : DEFAULT_BUCKET_START;
+        let bucketP = (typeof storedP === 'number' && Number.isFinite(storedP)) ? storedP : DEFAULT_BUCKET_START;
+        if (bucketT < DEFAULT_BUCKET_START) {
+          bucketT = DEFAULT_BUCKET_START;
+        }
+        if (bucketP < DEFAULT_BUCKET_START) {
+          bucketP = DEFAULT_BUCKET_START;
+        }
 
         // If no prior bucket is stored, persist the default start so future sessions reuse it
         if (storedT == null) {
