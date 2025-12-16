@@ -22,7 +22,7 @@ export default function HomeScreen({ mode = 'Trending' }) {
   const [practicePrefetchedNext, setPracticePrefetchedNext] = React.useState(false);
 
   const DEFAULT_BUCKET_START = 10000;
-  const BUCKET_SIZE = 100;
+  const BUCKET_SIZE = 1000;
   const PAGE_SIZE = 10;
   const PREFETCH_INDEX_IN_BATCH = 7; // 0-based index 7 => 8th puzzle
 
