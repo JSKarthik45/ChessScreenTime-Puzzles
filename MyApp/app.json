@@ -3,7 +3,7 @@
     "name": "Chess Screen Time - Puzzles",
     "slug": "chess-screen-time-puzzles",
     "scheme": "chessscreentime",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "automatic",

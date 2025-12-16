@@ -118,7 +118,7 @@ export default function OnboardingPager() {
           if (item.key === 'problem') {
             return (
               <View style={[styles.page, { width, backgroundColor: colors.background }]}> 
-                  <Text style={[styles.title, { color: colors.secondary }]}>Distracted by endless scrolling?</Text>
+                  <Text style={[styles.title, { color: colors.primary }]}>Distracted by endless scrolling?</Text>
                   <Text style={[styles.subtitle, { color: colors.muted }]}>Scrolling eats your time when you meant to focus or rest.</Text>
                   <View style={{ position: 'absolute', top: 80, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
                     {/* Scatter social icons around screen (hardcoded positions) */}
@@ -153,7 +153,7 @@ export default function OnboardingPager() {
           if (item.key === 'solution') {
             return (
               <View style={[styles.page, { width, backgroundColor: colors.background }]}> 
-                  <Text style={[styles.title, { color: colors.secondary }]}>Turn no‑scroll hours into progress</Text>
+                  <Text style={[styles.title, { color: colors.primary }]}>Turn no‑scroll hours into progress</Text>
                   <Text style={[styles.subtitle, { color: colors.muted }]}>Pick the times you want less scrolling. We’ll nudge you then to open this app and solve chess puzzles instead.</Text>
                   {/* Single row of chess pieces below text */}
                   <View style={{ marginTop: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
@@ -182,7 +182,7 @@ export default function OnboardingPager() {
           if (item.key === 'setup') {
             return (
               <ScrollView style={{ width }} contentContainerStyle={[styles.page, { alignItems: 'stretch', backgroundColor: colors.background }]}> 
-                  <Text style={[styles.title, { color: colors.secondary }]}>Quick setup</Text>
+                  <Text style={[styles.title, { color: colors.primary }]}>Quick setup</Text>
                   {/* <Text style={[styles.subtitle, { color: colors.muted }]}>Choose which apps to block and how many puzzles to solve.</Text> */}
                 <SettingsQuickSetup
                   blocked={blocked}
@@ -196,7 +196,7 @@ export default function OnboardingPager() {
           // motivation
           return (
             <View style={[styles.page, { width, backgroundColor: colors.background }]}> 
-                <Text style={[styles.title, { color: colors.secondary }]}>Rewire your brain, one choice at a time</Text>
+                <Text style={[styles.title, { color: colors.primary }]}>Rewire your brain, one choice at a time</Text>
                 <Text style={[styles.subtitle, { color: colors.muted }]}>Small choices away from scrolling, toward puzzles, add up to stronger focus and better habits.</Text>
                 {/* Single row of progress/habits/brain icons */}
                 <View style={{ marginTop: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
