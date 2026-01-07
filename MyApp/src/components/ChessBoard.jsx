@@ -163,7 +163,7 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
 
   return (
     <View style={{ opacity: 0.99 }}>
-    <View style={{ width: size, height: size, borderRadius, overflow: 'hidden', backgroundColor: boardColors.frame, borderWidth: 2, borderColor: boardColors.border }}>
+    <View style={{ width: size, height: size, borderRadius, overflow: 'hidden', backgroundColor: boardColors.frame, borderWidth: 0, borderColor: boardColors.border }}>
       {boardData.map((rank, r) => (
         <View key={`r-${r}`} style={{ flexDirection: 'row' }}>
           {rank.map((sq, c) => {
