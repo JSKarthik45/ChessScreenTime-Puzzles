@@ -135,21 +135,38 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
     const squareAlg = algebraicFromRC(r, c);
     const isSelected = selected && selected.square === squareAlg;
     const isLegal = legalTargets.includes(squareAlg);
-    const iconSize = squareSize * 0.70;
+    const iconSize = squareSize * 0.80;
     return (
       <>
         {sq ? (
-          <FontAwesome5
-            name={iconNameFromType[sq[1].toLowerCase()]}
-            size={iconSize}
-            color={sq[0] === 'w' ? pieceColorWhite : pieceColorBlack}
-            solid
-            style={{
-              textShadowColor: '#000000ff', 
-              textShadowOffset: { width: 1, height: 1 },
-              textShadowRadius: 2,
-            }}
-          />
+          <View style={{ padding: squareSize * 0.05, alignItems: 'center', justifyContent: 'center' }}>
+            {/* Background "Outline" Icon */}
+            <FontAwesome5
+              name={iconNameFromType[sq[1].toLowerCase()]}
+              size={iconSize}
+              color={sq[0] === 'w' ? '#000' : '#fff'}
+              solid
+              style={{
+                position: 'absolute',
+                textShadowColor: sq[0] === 'w' ? '#000' : '#fff',
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: 2,
+              }}
+            />
+
+            {/* Main Foreground Icon */}
+            <FontAwesome5
+              name={iconNameFromType[sq[1].toLowerCase()]}
+              size={iconSize}
+              color={sq[0] === 'w' ? pieceColorWhite : pieceColorBlack}
+              solid
+              style={{
+                textShadowColor: sq[0] === 'w' ? '#000' : '#fff',
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: 2,
+              }}
+            />
+          </View>
         ) : null}
         {isLegal && (
           <View style={{ position: 'absolute', width: squareSize * 0.3, height: squareSize * 0.3, borderRadius: 999, backgroundColor: moveDotColor, opacity: 0.5 }} />
