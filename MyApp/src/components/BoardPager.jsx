@@ -8,7 +8,28 @@ const EMPTY_FEN = '8/8/8/8/8/8/8/8 w - - 0 1';
 
 // We will preload the NEXT board instead of a blank transition
 
-export default function BoardPager({ boards, transitionMode = 'blank', tableName = null, onIndexChange = null }) {
+const PageItem = memo(function PageItem({ item, height, onAdvance }) {
+  const board = item.board || {};
+  return (
+    <View style={{ height, overflow: 'hidden' }}>
+      <BoardPanel
+        key={board.key}
+        fen={board.fen}
+        turnText={board.turnText}
+        borderRadius={10}
+        heightFraction={1}
+        text={board.text}
+        correctMove={board.correctMove}
+        onAdvance={onAdvance}
+        autoAdvance={false}
+        boardId={board.key}
+        onMarkViewed={null}
+      />
+    </View>
+  );
+});
+
+export default function BoardPager({ boards, transitionMode = 'blank', onIndexChange = null, initialIndex = 0 }) {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight() / 4;
   const headerHeight = useHeaderHeight() / 4;
@@ -19,10 +40,10 @@ export default function BoardPager({ boards, transitionMode = 'blank', tableName
 
   // Respond to length changes even if the array reference is stable
   const source = useMemo(() => (Array.isArray(boards) ? boards : []), [boards, boards?.length]);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [currentIdx, setCurrentIdx] = useState(initialIndex);
+  const appliedInitialRef = useRef(false);
   const [commitPending, setCommitPending] = useState(false);
   const commitBoardRef = useRef(null);
-  const [pendingAdvance, setPendingAdvance] = useState(false);
 
   // Build two-page buffer with stable slot keys so panels don't remount
   const pages = useMemo(() => {
@@ -56,30 +77,8 @@ export default function BoardPager({ boards, transitionMode = 'blank', tableName
     ];
   }, [source, currentIdx, commitPending, transitionMode]);
 
-  const PageItem = memo(function PageItem({ item, height, onAdvance }) {
-    const board = item.board || {};
-    return (
-      <View style={{ height, overflow: 'hidden' }}>
-        <BoardPanel
-          key={board.key}
-          fen={board.fen}
-          turnText={board.turnText}
-          borderRadius={10}
-          heightFraction={1}
-          text={board.text}
-          correctMove={board.correctMove}
-          onAdvance={onAdvance}
-          autoAdvance={false}
-          boardId={board.key}
-          onMarkViewed={null}
-        />
-      </View>
-    );
-  });
-
   const advance = useCallback(() => {
     if (source.length < 1) return;
-    setPendingAdvance(true);
     listRef.current?.scrollToOffset({ offset: pageHeight, animated: true });
   }, [pageHeight, source.length]);
 
@@ -120,11 +119,17 @@ export default function BoardPager({ boards, transitionMode = 'blank', tableName
     }
   }, [pageHeight, recycleForward, source.length]);
 
-  // If incoming boards shrink or grow, keep currentIdx in range
+  // When boards first become available, jump to the saved initialIndex.
+  // After that, just keep currentIdx in range when length changes.
   useEffect(() => {
     if (source.length === 0) return;
-    setCurrentIdx((i) => i % source.length);
-  }, [source.length]);
+    if (!appliedInitialRef.current && initialIndex > 0 && initialIndex < source.length) {
+      setCurrentIdx(initialIndex);
+      appliedInitialRef.current = true;
+    } else {
+      setCurrentIdx((i) => i % source.length);
+    }
+  }, [source.length, initialIndex]);
 
   return (
     <View style={{ flex: 1 }} onLayout={(e) => {

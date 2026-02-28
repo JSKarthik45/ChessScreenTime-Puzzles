@@ -185,8 +185,6 @@ export default function OnboardingPager() {
                   <Text style={[styles.title, { color: colors.primary }]}>Quick setup</Text>
                   {/* <Text style={[styles.subtitle, { color: colors.muted }]}>Choose which apps to block and how many puzzles to solve.</Text> */}
                 <SettingsQuickSetup
-                  blocked={blocked}
-                  setBlocked={setBlocked}
                   problemTarget={problemTarget}
                   setProblemTarget={setProblemTarget}
                 />

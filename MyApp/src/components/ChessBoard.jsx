@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Pressable } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { getChessBoardColors } from '../theme/colors';
 // Logic library (install: npm install chess.js)

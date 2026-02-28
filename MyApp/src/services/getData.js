@@ -1,21 +1,12 @@
-import { map } from 'lodash';
 import { supabase } from '../services/supabase';
 import { loadPreferences } from '../storage/preferences';
 
+const COLUMNS = 'id,fen,text,correctMove,popularity,lowestRating,highestRating';
 const DEFAULT_BUCKET_SIZE = 1000;
 // To avoid infinite loops when advancing id windows
 const MAX_BUCKET_HOPS = 20;
 
 export async function getPuzzlesData(tableName, limit = 10, rangeStart = null, rangeSize = DEFAULT_BUCKET_SIZE) {
-    const mapRows = (rows) => (rows || []).map((row) => ({
-        id: (typeof row.id === 'number' ? row.id : null),
-        key: String(row.id ?? row.key ?? Math.random()),
-        fen: row.fen,
-        turnText: row.turnText || row.turn || 'White to play',
-        text: row.text || 'Can you solve this puzzle?',
-        correctMove: row.correctMove ?? null,
-    }));
-
     const mapRowsFromPuzzles = (rows) => (rows || []).map((row) => {
         const fen = row.fen || '';
         const parts = typeof fen === 'string' ? fen.split(' ') : [];
@@ -48,7 +39,7 @@ export async function getPuzzlesData(tableName, limit = 10, rangeStart = null, r
 
                 let q = supabase
                     .from('Puzzles')
-                    .select('*');
+                    .select(COLUMNS);
 
                 if (lowerId != null && upperId != null) {
                     q = q.gte('id', lowerId).lt('id', upperId);
@@ -81,7 +72,7 @@ export async function getPuzzlesData(tableName, limit = 10, rangeStart = null, r
                 if (!hasRange) {
                     let q = supabase
                         .from('Puzzles')
-                        .select('*')
+                        .select(COLUMNS)
                         .lte('lowestRating', rating)
                         .gte('highestRating', rating)
                         .order('id', { ascending: true })
@@ -108,7 +99,7 @@ export async function getPuzzlesData(tableName, limit = 10, rangeStart = null, r
 
                         let q = supabase
                             .from('Puzzles')
-                            .select('*')
+                            .select(COLUMNS)
                             .gte('id', lowerId).lt('id', upperId)
                             .lte('lowestRating', rating)
                             .gte('highestRating', rating)
@@ -138,7 +129,7 @@ export async function getPuzzlesData(tableName, limit = 10, rangeStart = null, r
 
                 let q = supabase
                     .from('Puzzles')
-                    .select('*');
+                    .select(COLUMNS);
 
                 if (lowerId != null && upperId != null) {
                     q = q.gte('id', lowerId).lt('id', upperId);

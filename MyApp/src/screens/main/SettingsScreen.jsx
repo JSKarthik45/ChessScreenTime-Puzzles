@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, Linking, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemedStyles, useThemeColors } from '../../theme/ThemeContext';
+import { useThemedStyles, useThemeColors, useThemeController } from '../../theme/ThemeContext';
 import { loadPreferences, savePreferences, setTheme, setChessUsername as saveChessUsername, setChessTacticsRating, clearChessImport } from '../../storage/preferences';
-import { scheduleDailyNoScrollNotification } from '../../services/notifications';
-import { useThemeController } from '../../theme/ThemeContext';
+import { scheduleAllWindowNotifications } from '../../services/notifications';
 
 // No app toggles; replaced by time window selection UI
 
@@ -96,10 +95,10 @@ const styleFactory = (colors) => StyleSheet.create({
   themeSwatches: { flexDirection: 'row', marginRight: 8 },
   swatch: { width: 18, height: 18, borderRadius: 4, marginRight: 4 },
   themeLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  linkList: { marginTop: 4 },
 });
 
 export default function SettingsScreen() {
-  const [blocked, setBlocked] = useState({});
   const [problemTarget, setProblemTarget] = useState(5);
   const [fromTime, setFromTime] = useState(''); // 'HH:mm' 24h
   const [toTime, setToTime] = useState('');
@@ -115,7 +114,6 @@ export default function SettingsScreen() {
   useEffect(() => {
     (async () => {
       const pref = await loadPreferences();
-      setBlocked(pref.blocked || {}); // legacy
       setProblemTarget(pref.problemTarget ?? 5);
       if (pref.fromTime) setFromTime(pref.fromTime);
       if (pref.toTime) setToTime(pref.toTime);
@@ -140,28 +138,6 @@ export default function SettingsScreen() {
       }
     } catch {}
     finally { setImporting(false); }
-  };
-
-  const toggleApp = (key) => {
-    // removed app toggles; retained for backward compatibility
-  };
-
-  const renderItem = ({ item }) => {
-    const isOn = !!blocked[item.key];
-    return (
-      <View style={styles.row}>
-        <View style={styles.rowLeft}>
-          <Ionicons name={item.icon} size={24} color={colors.text} />
-          <Text style={styles.rowLabel}>{item.label}</Text>
-        </View>
-        <Switch
-          value={isOn}
-          onValueChange={() => toggleApp(item.key)}
-          trackColor={{ false: colors.border, true: colors.primary }}
-          thumbColor={isOn ? colors.text : '#f4f3f4'}
-        />
-      </View>
-    );
   };
 
   const themeOptions = [
@@ -223,7 +199,7 @@ export default function SettingsScreen() {
       toTime: pickerTarget === 'to' ? value : toTime,
     });
     try {
-      await scheduleDailyNoScrollNotification();
+      await scheduleAllWindowNotifications();
     } catch {}
     setPickerVisible(false);
   };
@@ -384,19 +360,4 @@ export default function SettingsScreen() {
   );
 }
 
-// Removed outdated static styles block; dynamic styles generated via styleFactory + useThemedStyles.
 
-// Extra styles for time pills and picker
-const extra = (colors) => ({
-  timePill: {
-    width: '48%',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  timePillLabel: { color: colors.muted, marginBottom: 4 },
-  timePillValue: { color: colors.text, fontWeight: '700', fontSize: 16 },
-});

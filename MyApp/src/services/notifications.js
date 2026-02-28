@@ -5,8 +5,8 @@ import { loadPreferences, getPuzzleCounts } from '../storage/preferences';
 // Configure how notifications are handled when app is foregrounded
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowBanner: true,  
-    shouldShowList: true,     
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -26,13 +26,16 @@ export async function ensureNotificationPermission() {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Default',
       importance: Notifications.AndroidImportance.MAX,
+      sound: 'default',
+      enableVibrate: true,
+      vibrationPattern: [0, 250, 250, 250],
     });
   }
 
   return status === 'granted';
 }
 
-// --- No-scroll window reminder logic ---
+// --- Time helpers ---
 
 function parseHHMM(s) {
   if (!s || typeof s !== 'string') return null;
@@ -66,12 +69,11 @@ function isNowInWindow(fromStr, toStr, now = new Date()) {
   if (f <= t) {
     return cur >= f && cur <= t;
   } else {
-    // crosses midnight: e.g., 22:00 -> 06:00
     return cur >= f || cur <= t;
   }
 }
 
-async function shouldSendReminder() {
+export async function shouldSendReminder() {
   const prefs = await loadPreferences();
   const { problemTarget = 5, fromTime, toTime } = prefs;
   if (!isNowInWindow(fromTime, toTime)) return false;
@@ -82,41 +84,78 @@ async function shouldSendReminder() {
   return solved < (Number(problemTarget) || 5);
 }
 
-// --- Daily notification at start of no-scroll window ---
+// --- Main scheduling function: schedules daily repeating notifications ---
+// Call this on EVERY app launch and whenever settings change.
+// It cancels all existing scheduled notifications and creates fresh ones.
 
-export async function scheduleDailyNoScrollNotification() {
+const REMINDER_INTERVAL_MIN = 45; // minutes between reminders during the window
+const MAX_REMINDERS = 6; // cap to avoid notification spam
+
+const REMINDER_MESSAGES = [
+  { title: 'No-scroll time!', body: 'Time to solve puzzles instead of scrolling.' },
+  { title: 'Still scrolling?', body: 'Open ChessST and solve your daily puzzles.' },
+  { title: 'Keep going!', body: 'Finish your daily chess puzzles.' },
+  { title: 'Puzzle time!', body: 'Put down the feed and pick up a puzzle.' },
+  { title: 'Almost there!', body: 'A few more puzzles to hit your daily goal.' },
+  { title: 'Last reminder!', body: "Don't let today pass without solving puzzles." },
+];
+
+export async function scheduleAllWindowNotifications() {
   const ok = await ensureNotificationPermission();
-  if (!ok) return null;
+  if (!ok) return;
+
+  // Always cancel all previously scheduled notifications to avoid duplicates
+  await Notifications.cancelAllScheduledNotificationsAsync();
 
   const prefs = await loadPreferences();
-  const { fromTime } = prefs;
-  const parsed = parseHHMM(fromTime);
-  if (!parsed) return null;
+  const { fromTime, toTime, problemTarget = 5 } = prefs;
 
-  const hour = parsed.h;
-  const minute = parsed.min;
+  const from = parseHHMM(fromTime);
+  const to = parseHHMM(toTime);
+  if (!from || !to) return;
 
-  const id = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'No-scroll time',
-      body: 'Time to solve puzzles instead of scrolling.',
-      priority: Notifications.AndroidNotificationPriority.HIGH,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour,
-      minute,
-      repeats: true,
-    },
-  });
+  let fromMin = from.h * 60 + from.min;
+  let toMin = to.h * 60 + to.min;
+  // Handle midnight crossing (e.g., 22:00 -> 06:00)
+  if (toMin <= fromMin) toMin += 24 * 60;
 
-  return id;
+  // Build time slots: window start + every REMINDER_INTERVAL_MIN
+  const slots = [];
+  for (let m = fromMin; m <= toMin && slots.length < MAX_REMINDERS; m += REMINDER_INTERVAL_MIN) {
+    const normalized = m % (24 * 60);
+    slots.push({ h: Math.floor(normalized / 60), min: normalized % 60 });
+  }
+
+  // Schedule each as a daily repeating notification (fires every day at exact time)
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i];
+    const msg = REMINDER_MESSAGES[i % REMINDER_MESSAGES.length];
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: msg.title,
+          body: msg.body,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: slot.h,
+          minute: slot.min,
+        },
+      });
+    } catch {}
+  }
 }
+
+// Legacy alias (kept for backward compatibility)
+export const scheduleDailyNoScrollNotification = scheduleAllWindowNotifications;
+
+// --- Foreground interval reminders (bonus: only fire when app is open) ---
 
 let reminderIntervalHandle = null;
 
-export function startNoScrollReminder(intervalMs = 1 * 60 * 1000) {
-  // Avoid duplicate intervals
+export function startNoScrollReminder(intervalMs = 2 * 60 * 1000) {
   if (reminderIntervalHandle) return;
   reminderIntervalHandle = setInterval(async () => {
     try {
@@ -126,9 +165,10 @@ export function startNoScrollReminder(intervalMs = 1 * 60 * 1000) {
           content: {
             title: 'Keep going!',
             body: 'Finish your daily puzzle goal.',
+            sound: 'default',
             priority: Notifications.AndroidNotificationPriority.HIGH,
           },
-          trigger: null,
+          trigger: null, // immediate
         });
       }
     } catch {}
@@ -140,4 +180,11 @@ export function stopNoScrollReminder() {
     clearInterval(reminderIntervalHandle);
     reminderIntervalHandle = null;
   }
+}
+
+// Cancel all notifications (e.g., when daily goal is reached)
+export async function cancelAllReminders() {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch {}
 }

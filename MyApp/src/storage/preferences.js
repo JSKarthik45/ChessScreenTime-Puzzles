@@ -18,6 +18,32 @@ export const LATEST_KEYS = {
   PracticePuzzles: 'dd_latest_practice_id',
 };
 
+// Index within the current 10-puzzle batch so users resume exactly where they left off
+const BATCH_INDEX_KEYS = {
+  TrendingPuzzles: 'dd_batch_index_trending',
+  PracticePuzzles: 'dd_batch_index_practice',
+};
+
+export async function getBatchIndex(tableName) {
+  try {
+    const key = BATCH_INDEX_KEYS[tableName];
+    if (!key) return 0;
+    const raw = await AsyncStorage.getItem(key);
+    const num = raw ? Number(raw) : 0;
+    return Number.isFinite(num) && num >= 0 ? num : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function setBatchIndex(tableName, index) {
+  try {
+    const key = BATCH_INDEX_KEYS[tableName];
+    if (!key) return;
+    await AsyncStorage.setItem(key, String(index ?? 0));
+  } catch {}
+}
+
 export async function getLatestPuzzleId(tableName) {
   try {
     const key = LATEST_KEYS[tableName];
@@ -95,7 +121,7 @@ export async function loadPreferences() {
     const problemTarget = targetStr ? Number(targetStr) : 5;
     const theme = (primary && secondary) ? { key: themeKey || 'classic', primary, secondary } : null;
 
-    // Default no-scroll window if user hasn't set times: 12:00 AM to 10:00 PM.
+    // Default no-scroll window if user hasn't set times: 8:00 PM to 10:30 PM.
     const effectiveFromTime = fromTime || '20:00';
     const effectiveToTime = toTime || '22:30';
 

@@ -11,12 +11,6 @@ import { useThemeColors, useThemedStyles } from '../theme/ThemeContext';
 /**
  * BoardPanel
  * Combines a ChessBoard with overlay action buttons (like/share) and turn text.
- * Props:
- *  - fen: FEN string ("start" or custom)
- *  - turnText: string displayed bottom-left (default: 'White to play')
- *  - borderRadius: number for board rounding
- *  - initialLiked / initialShared: booleans
- *  - onLikeChange / onShareChange: callbacks receiving new state
  */
 const styleFactory = (colors) => StyleSheet.create({
   root: { flex: 1 },
@@ -44,6 +38,15 @@ const styleFactory = (colors) => StyleSheet.create({
     borderRadius: 12,
   },
   bannerText: { fontSize: 18, fontWeight: '600', color: colors.text, textAlign: 'center' },
+  swipeHint: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  swipeHintText: { fontSize: 13, color: colors.muted, fontWeight: '500' },
 });
 
 export default function BoardPanel({
@@ -87,9 +90,8 @@ export default function BoardPanel({
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const [confettiItems, setConfettiItems] = useState([]); // poured confetti pieces
   const lastPanelTap = useRef(0);
-  const correctSoundRef = useRef(null);
-  const [soundLoaded, setSoundLoaded] = useState(false);
   const [solved, setSolved] = useState(false); // ensure daily counter increments only once per puzzle
+  const swipeHintBounce = useRef(new Animated.Value(0)).current;
 
   // Reset per-puzzle local state when the board changes
   React.useEffect(() => {
@@ -98,6 +100,7 @@ export default function BoardPanel({
     setSolved(false);
     setBannerVariant('default');
     setBannerText(text);
+    swipeHintBounce.setValue(0);
   }, [boardId, text, initialLiked, initialShared, fen]);
 
   const triggerBigHeart = () => {
@@ -190,6 +193,8 @@ export default function BoardPanel({
       setBannerVariant('correct');
       setBannerText('Correct');
       launchConfetti();
+      // Start swipe-up hint bounce animation
+      startSwipeHintBounce();
       //playCorrectSound();
     } else {
       setBannerVariant('incorrect');
@@ -217,6 +222,19 @@ export default function BoardPanel({
     ]).start();
   };
 
+  const startSwipeHintBounce = () => {
+    // Delayed start, then loop a gentle bounce
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(swipeHintBounce, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(swipeHintBounce, { toValue: 0, duration: 600, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        ]),
+        { iterations: 5 }
+      ).start();
+    }, 800);
+  };
+
   const launchConfetti = () => {
     const palette = [colors.success, '#ffd700', colors.primary, colors.secondary];
     const items = [];
@@ -237,7 +255,7 @@ export default function BoardPanel({
       ]).start();
     }
     setConfettiItems(items);
-    setTimeout(() => setConfettiItems([]), 200);
+    setTimeout(() => setConfettiItems([]), 3000);
   };
 
   const shakeTranslate = shakeAnim.interpolate({ inputRange: [-1,1], outputRange: [-6,6] });
@@ -296,6 +314,18 @@ export default function BoardPanel({
       <View style={[styles.leftTextWrap, { bottom: overlayBottom }]} pointerEvents="none">
         <Text style={styles.sideText}>{turnText}</Text>
       </View>
+      {solved && !autoAdvance && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.swipeHint,
+            { bottom: overlayBottom + 36, transform: [{ translateY: swipeHintBounce.interpolate({ inputRange: [0, 1], outputRange: [0, -8] }) }] },
+          ]}
+        >
+          <Ionicons name="chevron-up" size={22} color={colors.muted} />
+          <Text style={styles.swipeHintText}>Swipe up for next</Text>
+        </Animated.View>
+      )}
       {showBigHeart && (
         <Animated.View
           pointerEvents="none"

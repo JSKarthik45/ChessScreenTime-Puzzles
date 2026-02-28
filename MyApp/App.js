@@ -7,23 +7,40 @@ import { OnboardingContext } from './src/navigation/OnboardingContext';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { loadPreferences } from './src/storage/preferences';
 import { setThemePrimarySecondary } from './src/theme/colors';
-import { ThemeProvider, useThemeColors, useThemeController } from './src/theme/ThemeContext';
-
-import getPuzzlesData from './src/services/getData';
+import { ThemeProvider, useThemeColors } from './src/theme/ThemeContext';
+import { scheduleAllWindowNotifications } from './src/services/notifications';
 
 // Toggle to force showing onboarding in development
-// Set to true during development to always see onboarding
 const SHOW_ONBOARDING_ALWAYS = false;
 
 const ONBOARDING_KEY = 'hasOnboarded';
 
+// Separate component so NavigationContainer doesn't remount on every App render
+function ThemedNavigation({ showOnboarding }) {
+  const colors = useThemeColors();
+  const navTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.background,
+      text: colors.text,
+      border: colors.border || DefaultTheme.colors.border,
+      notification: colors.primary,
+    },
+  };
+  return (
+    <NavigationContainer theme={navTheme}>
+      {showOnboarding ? <OnboardingNavigator /> : <AppNavigator />}
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [hasOnboarded, setHasOnboarded] = useState(false);
-  // In dev, start in onboarding even if stored as completed,
-  // but allow switching to app after finishing within the session.
   const [devSessionOnboarding, setDevSessionOnboarding] = useState(SHOW_ONBOARDING_ALWAYS);
-
   const [initialTheme, setInitialTheme] = useState(null);
 
   useEffect(() => {
@@ -36,6 +53,8 @@ export default function App() {
           setThemePrimarySecondary(prefs.theme.primary, prefs.theme.secondary);
           setInitialTheme(prefs.theme);
         }
+        // Re-schedule all window notifications on every app launch for reliability
+        scheduleAllWindowNotifications().catch(() => {});
       } catch (e) {
         setHasOnboarded(false);
       } finally {
@@ -46,11 +65,9 @@ export default function App() {
   }, []);
 
   if (loading) {
-    // While loading preferences/onboarding flag, rely on the native Expo splash.
     return null;
   }
 
-  // In development, start with onboarding but allow exit on completion
   const showOnboarding = devSessionOnboarding ? true : !hasOnboarded;
 
   const completeOnboarding = async () => {
@@ -58,40 +75,17 @@ export default function App() {
       await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
     } finally {
       setHasOnboarded(true);
-      // End dev-only onboarding for this session so app shows after completion
       setDevSessionOnboarding(false);
     }
-  };
-
-  // Build a navigation theme each render after provider mounts so primary/secondary update.
-  const ThemedNav = () => {
-    const colors = useThemeColors();
-    const navTheme = {
-      ...DefaultTheme,
-      colors: {
-        ...DefaultTheme.colors,
-        primary: colors.primary,
-        background: colors.background,
-        card: colors.background,
-        text: colors.text,
-        border: colors.border || DefaultTheme.colors.border,
-        notification: colors.primary,
-      },
-    };
-    return (
-      <NavigationContainer theme={navTheme}>
-        {showOnboarding ? <OnboardingNavigator /> : <AppNavigator />}
-      </NavigationContainer>
-    );
+    // Schedule notifications after onboarding completes
+    scheduleAllWindowNotifications().catch(() => {});
   };
 
   return (
     <OnboardingContext.Provider value={{ completeOnboarding }}>
       <ThemeProvider initialTheme={initialTheme}>
-        <ThemedNav />
+        <ThemedNavigation showOnboarding={showOnboarding} />
       </ThemeProvider>
     </OnboardingContext.Provider>
   );
 }
-
-// Onboarding completion is handled through OnboardingContext

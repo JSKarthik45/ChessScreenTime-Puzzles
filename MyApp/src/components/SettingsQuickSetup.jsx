@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from 'react-native';
 import { useThemeColors, useThemedStyles } from '../theme/ThemeContext';
 import { loadPreferences, savePreferences } from '../storage/preferences';
+import { scheduleAllWindowNotifications } from '../services/notifications';
 
 const styleFactory = (colors) => StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, color: colors.text },
@@ -40,7 +41,7 @@ const styleFactory = (colors) => StyleSheet.create({
   helperText: { marginTop: 1, color: colors.muted },
 });
 
-export default function SettingsQuickSetup({ blocked, setBlocked, problemTarget, setProblemTarget }) {
+export default function SettingsQuickSetup({ problemTarget, setProblemTarget }) {
   const colors = useThemeColors();
   const styles = useThemedStyles(styleFactory);
   const [fromTime, setFromTime] = useState('');
@@ -92,6 +93,8 @@ export default function SettingsQuickSetup({ blocked, setBlocked, problemTarget,
     if (pickerTarget === 'from') setFromTime(value);
     else setToTime(value);
     savePreferences({ problemTarget, fromTime: pickerTarget === 'from' ? value : fromTime, toTime: pickerTarget === 'to' ? value : toTime });
+    // Reschedule notifications with the new time window
+    scheduleAllWindowNotifications().catch(() => {});
     setPickerVisible(false);
   };
 
