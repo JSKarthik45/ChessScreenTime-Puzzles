@@ -22,22 +22,33 @@ const hexToRgb = (hex) => {
 
 const styleFactory = (colors) => {
 	const { width } = Dimensions.get('window');
+	const dayLabelWidth = 24; // width for Mon/Wed/Fri labels
 	const maxCols = 12; // 12 weeks
 	const gutter = 4;
-	const cellSize = Math.floor((width - 32 - gutter * (maxCols - 1)) / maxCols); // 16 padding each side
+	const cellSize = Math.floor((width - 32 - dayLabelWidth - gutter * (maxCols - 1)) / maxCols);
 	return StyleSheet.create({
 		root: { flex: 1, padding: 16 },
-		centerWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 12, marginBottom: 16 },
+		centerWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 16, marginBottom: 20 },
 		flameWrap: { alignItems: 'center', justifyContent: 'center', position: 'relative', width: 160, height: 160 },
-		streakText: { marginTop: 8, fontSize: 16, fontWeight: '700', color: colors.text },
+		streakNumber: { fontSize: 42, fontWeight: '900', color: colors.text, marginTop: 8 },
+		streakLabel: { fontSize: 15, fontWeight: '600', color: colors.muted, marginTop: 2 },
+		streakMotivation: { fontSize: 13, color: colors.primary, fontWeight: '600', marginTop: 6 },
+		sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+		sectionIcon: { marginRight: 8 },
+		sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+		sectionSub: { fontSize: 12, color: colors.muted, marginLeft: 'auto' },
 		heatmapWrap: { marginTop: 8 },
+		heatmapRow: { flexDirection: 'row', alignItems: 'flex-start' },
+		dayLabelsCol: { width: dayLabelWidth, marginRight: 4 },
+		dayLabel: { height: cellSize + 4, justifyContent: 'center' },
+		dayLabelText: { fontSize: 10, fontWeight: '600', color: colors.muted },
 		row: { flexDirection: 'row' },
 		col: { marginRight: gutter },
 		cell: { width: cellSize, height: cellSize, borderRadius: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
 		cellText: { fontSize: 10, fontWeight: '600' },
-		legendRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-		legendLabel: { fontSize: 12, color: colors.muted, marginRight: 8 },
-		legendBox: { width: 16, height: 16, borderRadius: 4, marginRight: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+		legendRow: { flexDirection: 'row', alignItems: 'center', marginTop: 14 },
+		legendLabel: { fontSize: 11, color: colors.muted, marginRight: 6, fontWeight: '500' },
+		legendBox: { width: 14, height: 14, borderRadius: 4, marginRight: 5, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
 		actionsRow: { position: 'absolute', right: 16, bottom: 16 },
 		fab: { backgroundColor: colors.primary, width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', elevation: 2 },
 	});
@@ -65,17 +76,21 @@ export default function StreakScreen() {
 		return () => unsubscribe();
 	}, []);
 
-	// Compute weeks (12) x 7 days heatmap data ending today
+	// Compute weeks (12) x 7 days heatmap data ending this week.
+	// Each column = Sun..Sat so the day labels stay correct.
 	const weeks = useMemo(() => {
 		const today = new Date();
-		const totalDays = 12 * 7;
-		const start = addDays(today, -totalDays + 1);
+		const todayStr = isoDay(today);
+		const dow = today.getDay(); // 0=Sun … 6=Sat
+		const thisWeekSun = addDays(today, -dow);
+		const start = addDays(thisWeekSun, -11 * 7); // 12 weeks total
 		const out = [];
 		for (let c = 0; c < 12; c++) {
 			const col = [];
 			for (let r = 0; r < 7; r++) {
 				const d = addDays(start, c * 7 + r);
-				col.push(isoDay(d));
+				const ds = isoDay(d);
+				col.push(ds <= todayStr ? ds : null); // null = future
 			}
 			out.push(col);
 		}
@@ -145,7 +160,11 @@ export default function StreakScreen() {
 
 	const renderColumn = ({ item }) => (
 		<View style={styles.col}>
-			{item.map((date) => {
+			{item.map((date, idx) => {
+				if (date === null) {
+					// Future date – render an empty transparent cell
+					return <View key={`future-${idx}`} style={[styles.cell, { backgroundColor: 'transparent', borderColor: 'transparent', marginBottom: 4 }]} />;
+				}
 				const n = counts[date] || 0;
 				const bg = levelColor(n);
 				const isToday = date === isoDay();
@@ -225,17 +244,41 @@ export default function StreakScreen() {
 						</Animated.View>
 					);
 				})()}
-				<Text style={styles.streakText}>{streakDays} day streak</Text>
+				<Text style={styles.streakNumber}>{streakDays}</Text>
+				<Text style={styles.streakLabel}>{streakDays === 1 ? 'day streak' : 'day streak'}</Text>
+				{streakDays > 0 && (
+					<Text style={styles.streakMotivation}>
+						{streakDays >= 7 ? '🔥 On fire! Keep it going!' : streakDays >= 3 ? '💪 Great momentum!' : '✨ Nice start!'}
+					</Text>
+				)}
+				{streakDays === 0 && (
+					<Text style={styles.streakMotivation}>Solve a puzzle to start your streak!</Text>
+				)}
 			</View>
 
 			<View style={styles.heatmapWrap}>
-				<FlatList
-					horizontal
-					showsHorizontalScrollIndicator={false}
-					data={weeks}
-					keyExtractor={(_, i) => `col-${i}`}
-					renderItem={renderColumn}
-				/>
+				<View style={styles.sectionHeader}>
+					<Ionicons name="calendar-outline" size={18} color={colors.primary} style={styles.sectionIcon} />
+					<Text style={styles.sectionTitle}>Activity</Text>
+					<Text style={styles.sectionSub}>Last 12 weeks</Text>
+				</View>
+				<View style={styles.heatmapRow}>
+					{/* Day labels column */}
+					<View style={styles.dayLabelsCol}>
+						{['', 'M', '', 'W', '', 'F', ''].map((label, idx) => (
+							<View key={idx} style={styles.dayLabel}>
+								<Text style={styles.dayLabelText}>{label}</Text>
+							</View>
+						))}
+					</View>
+					<FlatList
+						horizontal
+						showsHorizontalScrollIndicator={false}
+						data={weeks}
+						keyExtractor={(_, i) => `col-${i}`}
+						renderItem={renderColumn}
+					/>
+				</View>
 
 				<View style={styles.legendRow}>
 					<Text style={styles.legendLabel}>Less</Text>

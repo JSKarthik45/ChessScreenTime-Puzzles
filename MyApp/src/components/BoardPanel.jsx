@@ -6,6 +6,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import ChessBoard from './ChessBoard';
 import { Ionicons } from '@expo/vector-icons';
 import { incrementTodayPuzzleCount } from '../storage/preferences';
+import { cancelIfGoalMet } from '../services/notifications';
 import { useThemeColors, useThemedStyles } from '../theme/ThemeContext';
 
 /**
@@ -20,7 +21,6 @@ const styleFactory = (colors) => StyleSheet.create({
   leftTextWrap: { position: 'absolute', left: 16, alignItems: 'flex-start' },
   sideText: { fontSize: 20, fontWeight: '700', color: colors.text },
   iconOnlyBtn: { alignItems: 'center', justifyContent: 'center' },
-  filledIcon: {},
   bigHeartOverlay: {
     position: 'absolute',
     top: 0,
@@ -85,12 +85,14 @@ export default function BoardPanel({
   const bigHeartScale = useRef(new Animated.Value(0)).current;
   const bigHeartOpacity = useRef(new Animated.Value(0)).current;
   const [showBigHeart, setShowBigHeart] = useState(false);
+  // Heart button bounce animation
+  const heartBtnScale = useRef(new Animated.Value(1)).current;
   const [bannerText, setBannerText] = useState(text);
   const [bannerVariant, setBannerVariant] = useState('default'); // default|correct|incorrect
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const [confettiItems, setConfettiItems] = useState([]); // poured confetti pieces
   const lastPanelTap = useRef(0);
   const [solved, setSolved] = useState(false); // ensure daily counter increments only once per puzzle
+  const [moveAttempted, setMoveAttempted] = useState(false); // true after any move (correct or incorrect)
   const swipeHintBounce = useRef(new Animated.Value(0)).current;
 
   // Reset per-puzzle local state when the board changes
@@ -98,6 +100,7 @@ export default function BoardPanel({
     setLiked(initialLiked || false);
     setShared(initialShared || false);
     setSolved(false);
+    setMoveAttempted(false);
     setBannerVariant('default');
     setBannerText(text);
     swipeHintBounce.setValue(0);
@@ -105,18 +108,18 @@ export default function BoardPanel({
 
   const triggerBigHeart = () => {
     setShowBigHeart(true);
-    bigHeartScale.setValue(0.3);
-    bigHeartOpacity.setValue(0.9);
-    Animated.sequence([
-      Animated.timing(bigHeartScale, {
+    bigHeartScale.setValue(0.2);
+    bigHeartOpacity.setValue(1);
+    Animated.parallel([
+      Animated.spring(bigHeartScale, {
         toValue: 1,
-        duration: 400,
-        easing: Easing.out(Easing.cubic),
+        friction: 4,
+        tension: 120,
         useNativeDriver: true,
       }),
       Animated.timing(bigHeartOpacity, {
         toValue: 0,
-        duration: 800,
+        duration: 600,
         delay: 800,
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
@@ -124,8 +127,19 @@ export default function BoardPanel({
     ]).start(() => setShowBigHeart(false));
   };
 
+  const bounceHeartBtn = () => {
+    heartBtnScale.setValue(0.7);
+    Animated.spring(heartBtnScale, {
+      toValue: 1,
+      friction: 3,
+      tension: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const handleLikePress = () => {
     const now = Date.now();
+    bounceHeartBtn();
     if (now - lastLikeTap.current < 300) {
       setLiked(true);
       onLikeChange && onLikeChange(true);
@@ -187,19 +201,21 @@ export default function BoardPanel({
       if (!solved) {
         setSolved(true);
         // Increment today's solved puzzle counter for streak tracking
-        incrementTodayPuzzleCount();
+        incrementTodayPuzzleCount().then(() => cancelIfGoalMet()).catch(() => {});
         try { if (onMarkViewed && boardId != null) onMarkViewed(boardId); } catch {}
       }
       setBannerVariant('correct');
       setBannerText('Correct');
-      launchConfetti();
+      setMoveAttempted(true);
       // Start swipe-up hint bounce animation
       startSwipeHintBounce();
       //playCorrectSound();
     } else {
       setBannerVariant('incorrect');
       setBannerText('Incorrect');
+      setMoveAttempted(true);
       triggerShake();
+      startSwipeHintBounce();
       try { Vibration.vibrate(120); } catch {}
     }
     // No automatic advance unless explicitly enabled
@@ -233,29 +249,6 @@ export default function BoardPanel({
         { iterations: 5 }
       ).start();
     }, 800);
-  };
-
-  const launchConfetti = () => {
-    const palette = [colors.success, '#ffd700', colors.primary, colors.secondary];
-    const items = [];
-    const total = 70; // dense vertical pour across full width
-    for (let i = 0; i < total; i++) {
-      const id = Date.now() + '-' + i;
-      const x = Math.random() * windowWidth; // span full width
-      const size = 6 + Math.random() * 10;
-      const fall = new Animated.Value(0);
-      const rotate = new Animated.Value(0);
-      const sway = new Animated.Value(0);
-      const clr = palette[i % palette.length];
-      items.push({ id, x, size, fall, rotate, sway, clr });
-      Animated.parallel([
-        Animated.timing(fall, { toValue: 1, duration: 1900 + Math.random()*900, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(rotate, { toValue: 1, duration: 1600 + Math.random()*800, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(sway, { toValue: 1, duration: 1900 + Math.random()*900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ]).start();
-    }
-    setConfettiItems(items);
-    setTimeout(() => setConfettiItems([]), 3000);
   };
 
   const shakeTranslate = shakeAnim.interpolate({ inputRange: [-1,1], outputRange: [-6,6] });
@@ -296,12 +289,13 @@ export default function BoardPanel({
       </View>
       <View style={[styles.actionsRight, { bottom: overlayBottom }]} pointerEvents="box-none">
         <Pressable onPress={handleLikePress} style={styles.iconOnlyBtn} hitSlop={12}>
-          <Ionicons
-            name={liked ? 'heart' : 'heart-outline'}
-            size={33}
-            color={colors.text}
-            style={liked ? styles.filledIcon : null}
-          />
+          <Animated.View style={{ transform: [{ scale: heartBtnScale }] }}>
+            <Ionicons
+              name={liked ? 'heart' : 'heart-outline'}
+              size={33}
+              color={liked ? colors.error : colors.text}
+            />
+          </Animated.View>
         </Pressable>
         <Pressable onPress={handleSharePress} style={[styles.iconOnlyBtn, { marginTop: 16 }]} hitSlop={12}>
           <Ionicons
@@ -314,7 +308,7 @@ export default function BoardPanel({
       <View style={[styles.leftTextWrap, { bottom: overlayBottom }]} pointerEvents="none">
         <Text style={styles.sideText}>{turnText}</Text>
       </View>
-      {solved && !autoAdvance && (
+      {moveAttempted && !autoAdvance && (
         <Animated.View
           pointerEvents="none"
           style={[
@@ -339,36 +333,6 @@ export default function BoardPanel({
         >
           <Ionicons name="heart" size={120} color={colors.error} />
         </Animated.View>
-      )}
-      {confettiItems.length > 0 && (
-        <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
-          {confettiItems.map(item => {
-            const translateY = item.fall.interpolate({ inputRange: [0,1], outputRange: [-40, windowHeight] });
-            const translateX = item.sway.interpolate({ inputRange: [0,1], outputRange: [0, (Math.random()*80 - 40)] });
-            const rotateDeg = item.rotate.interpolate({ inputRange: [0,1], outputRange: ['0deg','900deg'] });
-            const opacity = item.fall.interpolate({ inputRange: [0,1], outputRange: [1, 0] });
-            return (
-              <Animated.View
-                key={item.id}
-                style={{
-                  position: 'absolute',
-                  left: item.x,
-                  top: -50,
-                  width: item.size,
-                  height: item.size,
-                  backgroundColor: item.clr,
-                  borderRadius: 3,
-                  transform: [
-                    { translateY },
-                    { translateX },
-                    { rotate: rotateDeg },
-                  ],
-                  opacity,
-                }}
-              />
-            );
-          })}
-        </View>
       )}
     </Animated.View>
   );

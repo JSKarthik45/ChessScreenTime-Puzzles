@@ -88,7 +88,7 @@ export async function shouldSendReminder() {
 // Call this on EVERY app launch and whenever settings change.
 // It cancels all existing scheduled notifications and creates fresh ones.
 
-const REMINDER_INTERVAL_MIN = 45; // minutes between reminders during the window
+const REMINDER_INTERVAL_MIN = 30; // minutes between reminders during the window
 const MAX_REMINDERS = 6; // cap to avoid notification spam
 
 const REMINDER_MESSAGES = [
@@ -106,6 +106,10 @@ export async function scheduleAllWindowNotifications() {
 
   // Always cancel all previously scheduled notifications to avoid duplicates
   await Notifications.cancelAllScheduledNotificationsAsync();
+
+  // Skip scheduling if the user already hit today's goal
+  const goalMet = await isGoalMetToday();
+  if (goalMet) return;
 
   const prefs = await loadPreferences();
   const { fromTime, toTime, problemTarget = 5 } = prefs;
@@ -155,7 +159,7 @@ export const scheduleDailyNoScrollNotification = scheduleAllWindowNotifications;
 
 let reminderIntervalHandle = null;
 
-export function startNoScrollReminder(intervalMs = 2 * 60 * 1000) {
+export function startNoScrollReminder(intervalMs = 10 * 60 * 1000) {
   if (reminderIntervalHandle) return;
   reminderIntervalHandle = setInterval(async () => {
     try {
@@ -187,4 +191,25 @@ export async function cancelAllReminders() {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch {}
+}
+
+// Check whether today's puzzle goal has been met
+async function isGoalMetToday() {
+  try {
+    const prefs = await loadPreferences();
+    const target = Number(prefs.problemTarget) || 5;
+    const counts = await getPuzzleCounts();
+    const today = new Date().toISOString().substring(0, 10);
+    return (counts[today] || 0) >= target;
+  } catch {
+    return false;
+  }
+}
+
+// Call after each puzzle solve – cancels remaining notifications once goal is met
+export async function cancelIfGoalMet() {
+  if (await isGoalMetToday()) {
+    await cancelAllReminders();
+    stopNoScrollReminder();
+  }
 }

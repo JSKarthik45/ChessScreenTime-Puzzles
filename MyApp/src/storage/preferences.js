@@ -197,8 +197,24 @@ export async function setChessUsername(username = "") {
   try { await AsyncStorage.setItem(KEYS.chessUsername, username || ''); } catch {}
 }
 
+// Lightweight event emitter for tactics rating changes (mirrors puzzle count pattern)
+const ratingListeners = new Set();
+export function onTacticsRatingChanged(handler) {
+  ratingListeners.add(handler);
+  return () => ratingListeners.delete(handler);
+}
+function emitTacticsRatingChanged(payload) {
+  ratingListeners.forEach((fn) => {
+    try { fn(payload); } catch {}
+  });
+}
+
 export async function setChessTacticsRating(rating = 1500) {
   try { if (rating != null) await AsyncStorage.setItem(KEYS.chessTacticsRating, String(rating)); } catch {}
+  // Read current username so subscribers get the full picture
+  let username = null;
+  try { username = await AsyncStorage.getItem(KEYS.chessUsername) || ''; } catch {}
+  emitTacticsRatingChanged({ rating, username });
 }
 
 export async function clearChessImport() {
@@ -208,4 +224,5 @@ export async function clearChessImport() {
       AsyncStorage.removeItem(KEYS.chessTacticsRating),
     ]);
   } catch {}
+  emitTacticsRatingChanged({ rating: null, username: '' });
 }

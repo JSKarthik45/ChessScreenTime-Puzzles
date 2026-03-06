@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemedStyles, useThemeColors, useThemeController } from '../../theme/ThemeContext';
-import { loadPreferences, savePreferences, setTheme, setChessUsername as saveChessUsername, setChessTacticsRating, clearChessImport } from '../../storage/preferences';
+import { loadPreferences, savePreferences, setTheme, setChessUsername as saveChessUsername, setChessTacticsRating, clearChessImport, onTacticsRatingChanged } from '../../storage/preferences';
 import { scheduleAllWindowNotifications } from '../../services/notifications';
+import TimePickerModal from '../../components/TimePickerModal';
 
 // No app toggles; replaced by time window selection UI
 
 const styleFactory = (colors) => StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  scrollContent: { paddingBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, color: colors.text },
+  container: { flex: 1, paddingHorizontal: 20, paddingTop: 12 },
+  scrollContent: { paddingBottom: 40 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  sectionIcon: { marginRight: 8 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  sectionSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
   listContent: { paddingVertical: 3 },
   row: {
     flexDirection: 'row',
@@ -22,80 +26,90 @@ const styleFactory = (colors) => StyleSheet.create({
   },
   rowLeft: { flexDirection: 'row', alignItems: 'center' },
   rowLabel: { marginLeft: 12, fontSize: 16, color: colors.text },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4 },
   pill: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  pillActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  pillText: { color: colors.text },
-  pillTextActive: { color: '#fff', fontWeight: '600' },
-  helperText: { marginTop: 6, color: colors.muted },
-  card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 12,
+    marginRight: 10,
+    marginBottom: 10,
     backgroundColor: colors.surface,
   },
-  cardLabel: { fontSize: 14, fontWeight: '600', marginBottom: 6, color: colors.text },
+  pillActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  pillText: { color: colors.text, fontSize: 15, fontWeight: '500' },
+  pillTextActive: { color: '#fff', fontWeight: '700' },
+  helperText: { fontSize: 13, marginTop: 4, color: colors.muted, lineHeight: 18 },
+  card: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: colors.surface,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  cardLabel: { fontSize: 13, fontWeight: '600', marginBottom: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
   primaryBtn: {
-    marginTop: 12,
-    paddingVertical: 12,
+    marginTop: 14,
+    paddingVertical: 13,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: colors.primary,
   },
   input: {
     color: colors.text,
-    borderWidth: StyleSheet.hairlineWidth,
+    fontSize: 15,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: colors.background,
   },
   primaryBtnText: {
-    color: colors.text,
+    color: '#fff',
     fontWeight: '700',
+    fontSize: 15,
   },
   timePill: {
     width: '48%',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
   },
-  timePillLabel: { color: colors.text, marginBottom: 4 },
-  timePillValue: { color: colors.text, fontWeight: '700', fontSize: 16 },
-  linkLabel: { marginLeft: 12, fontSize: 16, color: colors.text, flex: 1 },
+  timePillLabel: { color: colors.muted, marginBottom: 4, fontSize: 12, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
+  timePillValue: { color: colors.text, fontWeight: '700', fontSize: 18 },
+  linkLabel: { marginLeft: 12, fontSize: 15, color: colors.text, flex: 1, fontWeight: '500' },
   linkIconRight: { marginLeft: 8 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  linkRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   themeRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   themeOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
     borderColor: colors.border,
     width: '48%',
     marginRight: 0,
     marginBottom: 10,
     backgroundColor: colors.surface,
   },
-  themeOptionActive: { borderColor: colors.primary },
-  themeSwatches: { flexDirection: 'row', marginRight: 8 },
-  swatch: { width: 18, height: 18, borderRadius: 4, marginRight: 4 },
+  themeOptionActive: { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.background },
+  themeSwatches: { flexDirection: 'row', marginRight: 10 },
+  swatch: { width: 22, height: 22, borderRadius: 6, marginRight: 5 },
   themeLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
   linkList: { marginTop: 4 },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 8, opacity: 0.5 },
 });
 
 export default function SettingsScreen() {
@@ -123,6 +137,12 @@ export default function SettingsScreen() {
       if (pref.chessUsername) setChessUsername(pref.chessUsername);
       if (pref.chessTacticsRating != null) setTacticsRating(pref.chessTacticsRating);
     })();
+    // Subscribe to cross-screen rating changes (e.g. imported from Practice tab)
+    const unsub = onTacticsRatingChanged(({ rating, username }) => {
+      setTacticsRating(rating);
+      if (username != null) setChessUsername(username);
+    });
+    return () => unsub();
   }, []);
   const importRating = async () => {
     if (!chessUsername) return;
@@ -157,9 +177,9 @@ export default function SettingsScreen() {
   // --- Time window UI helpers ---
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pickerTarget, setPickerTarget] = useState('from'); // 'from' | 'to'
-  const [tmpHour, setTmpHour] = useState(9);
-  const [tmpMinute, setTmpMinute] = useState(0);
-  const [tmpAmPm, setTmpAmPm] = useState('AM');
+  const [pickerInitH, setPickerInitH] = useState(9);
+  const [pickerInitM, setPickerInitM] = useState(0);
+  const [pickerInitAP, setPickerInitAP] = useState('AM');
 
   const formatTime = (hhmm) => {
     if (!hhmm) return 'Set time';
@@ -181,15 +201,15 @@ export default function SettingsScreen() {
       if (Number.isFinite(sh)) h = sh;
       if (Number.isFinite(sm)) m = sm;
     }
-    setTmpHour(((h % 12) || 12));
-    setTmpMinute(m);
-    setTmpAmPm(h >= 12 ? 'PM' : 'AM');
+    setPickerInitH(((h % 12) || 12));
+    setPickerInitM(m);
+    setPickerInitAP(h >= 12 ? 'PM' : 'AM');
     setPickerVisible(true);
   };
 
-  const commitPicker = async () => {
-    const h24 = (tmpHour % 12) + (tmpAmPm === 'PM' ? 12 : 0);
-    const mm = String(tmpMinute).padStart(2, '0');
+  const commitPicker = async ({ hour, minute, amPm }) => {
+    const h24 = (hour % 12) + (amPm === 'PM' ? 12 : 0);
+    const mm = String(minute).padStart(2, '0');
     const value = `${String(h24).padStart(2, '0')}:${mm}`;
     if (pickerTarget === 'from') setFromTime(value);
     else setToTime(value);
@@ -207,9 +227,14 @@ export default function SettingsScreen() {
   return (
     <>
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.sectionTitle}>When do you end up scrolling the most?</Text>
+      <View style={styles.sectionHeader}>
+        <Ionicons name="time-outline" size={20} color={colors.primary} style={styles.sectionIcon} />
+        <View>
+          <Text style={styles.sectionTitle}>No-scroll window</Text>
+          <Text style={styles.sectionSub}>When do you end up scrolling the most?</Text>
+        </View>
+      </View>
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>No-scroll window</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Pressable onPress={() => openPicker('from')} style={[styles.timePill]}>
             <Text style={styles.timePillLabel}>From</Text>
@@ -223,7 +248,10 @@ export default function SettingsScreen() {
         <Text style={[styles.helperText, { marginTop: 8 }]}>We’ll nudge you to finish puzzles during this window.</Text>
       </View>
 
-      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Daily puzzle goal</Text>
+      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+        <Ionicons name="trophy-outline" size={20} color={colors.primary} style={styles.sectionIcon} />
+        <Text style={styles.sectionTitle}>Daily puzzle goal</Text>
+      </View>
       <View style={styles.pillRow}>
         {[1, 3, 5, 10, 20].map(n => {
           const active = problemTarget === n;
@@ -236,15 +264,18 @@ export default function SettingsScreen() {
       </View>
       <Text style={styles.helperText}>If you haven’t hit your {problemTarget}-puzzle goal by no‑scroll time, we’ll nudge you to finish instead of scrolling.</Text>
 
-      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Tactics Rating from Chess.com</Text>
+      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+        <Ionicons name="stats-chart-outline" size={20} color={colors.primary} style={styles.sectionIcon} />
+        <Text style={styles.sectionTitle}>Tactics Rating</Text>
+      </View>
       <View style={styles.card}>
         {tacticsRating != null ? (
           <>
             <Text style={styles.cardLabel}>Tactics Highest Rating</Text>
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>{tacticsRating}</Text>
             <Text style={styles.helperText}>Imported for {chessUsername}</Text>
-            <Pressable onPress={async () => { await clearChessImport(); setTacticsRating(null); setChessUsername(''); }} style={[styles.primaryBtn, { marginTop: 10, backgroundColor: colors.primary }]}>
-              <Text style={{ color: colors.text, fontWeight: '700' }}>Clear & Re-import</Text>
+            <Pressable onPress={async () => { await clearChessImport(); setTacticsRating(null); setChessUsername(''); }} style={[styles.primaryBtn, { marginTop: 10, backgroundColor: colors.error }]}>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>Clear & Re-import</Text>
             </Pressable>
           </>
         ) : (
@@ -266,7 +297,10 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Theme</Text>
+      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+        <Ionicons name="color-palette-outline" size={20} color={colors.primary} style={styles.sectionIcon} />
+        <Text style={styles.sectionTitle}>Theme</Text>
+      </View>
       <View style={styles.themeRow}>
         {themeOptions.map(opt => {
           const active = themeKey === opt.key;
@@ -283,7 +317,10 @@ export default function SettingsScreen() {
         })}
       </View>
 
-      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Our other products and services</Text>
+      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+        <Ionicons name="link-outline" size={20} color={colors.primary} style={styles.sectionIcon} />
+        <Text style={styles.sectionTitle}>More from us</Text>
+      </View>
       <View style={styles.linkList}>
         <Pressable style={styles.linkRow} onPress={() => Linking.openURL('https://www.clutchess.tech')}>
           <Ionicons name="planet" size={22} color={colors.text} />
@@ -298,64 +335,15 @@ export default function SettingsScreen() {
       </View>
 
     </ScrollView>
-    {/* Time picker modal */}
-    <Modal
+    <TimePickerModal
       visible={pickerVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setPickerVisible(false)}
-    >
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: '86%', borderRadius: 16, backgroundColor: colors.surface, padding: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 16, marginBottom: 8 }}>Select time</Text>
-          {/* Top: two big rectangles for Hour and Minute */}
-          <View style={{ flexDirection:'row', justifyContent:'space-between', marginBottom:8 }}>
-            <Pressable onPress={() => { /* optional: cycle hour */ }} style={{ flex:1, marginRight:8, height:64, borderRadius:12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, alignItems:'center', justifyContent:'center' }}>
-              <Text style={{ color: colors.text, fontSize:28, fontWeight:'800' }}>{tmpHour}</Text>
-            </Pressable>
-            <View style={{ width:24, alignItems:'center', justifyContent:'center' }}>
-              <Text style={{ color: colors.text, fontSize:24, fontWeight:'800' }}>:</Text>
-            </View>
-            <Pressable onPress={() => { /* optional: cycle minute */ }} style={{ flex:1, marginLeft:8, height:64, borderRadius:12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, alignItems:'center', justifyContent:'center' }}>
-              <Text style={{ color: colors.text, fontSize:28, fontWeight:'800' }}>{String(tmpMinute).padStart(2,'0')}</Text>
-            </Pressable>
-          </View>
-          {/* Bottom: smaller AM/PM rectangles */}
-          <View style={{ flexDirection:'row', justifyContent:'center', marginBottom:10 }}>
-            {['AM','PM'].map(v => (
-              <Pressable key={v} onPress={() => setTmpAmPm(v)} style={{ paddingVertical:8, paddingHorizontal:18, marginHorizontal:6, borderRadius:10, backgroundColor: tmpAmPm===v? colors.primary: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-                <Text style={{ color: tmpAmPm===v? '#fff': colors.text, fontWeight:'700' }}>{v}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {/* Selection chips below for hour and minute */}
-          <Text style={{ color: colors.muted, marginBottom:6 }}>Hour</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 6 }}>
-            {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-              <Pressable key={h} onPress={() => setTmpHour(h)} style={{ paddingVertical: 10, paddingHorizontal: 12, marginRight: 8, borderRadius: 10, backgroundColor: tmpHour===h? colors.primary: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-                <Text style={{ color: tmpHour===h? '#fff': colors.text, fontWeight: '700' }}>{h}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <Text style={{ color: colors.muted, marginBottom:6 }}>Minute</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 6 }}>
-            {[0,15,30,45].map(m => (
-              <Pressable key={m} onPress={() => setTmpMinute(m)} style={{ paddingVertical: 10, paddingHorizontal: 12, marginRight: 8, borderRadius: 10, backgroundColor: tmpMinute===m? colors.primary: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-                <Text style={{ color: tmpMinute===m? '#fff': colors.text, fontWeight: '700' }}>{String(m).padStart(2,'0')}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
-            <Pressable onPress={() => setPickerVisible(false)} style={{ paddingVertical: 10, paddingHorizontal: 14, marginRight: 8 }}>
-              <Text style={{ color: colors.muted, fontWeight: '600' }}>Cancel</Text>
-            </Pressable>
-            <Pressable onPress={commitPicker} style={{ paddingVertical: 10, paddingHorizontal: 14, backgroundColor: colors.primary, borderRadius: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '800' }}>Save</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
+      onClose={() => setPickerVisible(false)}
+      onSave={commitPicker}
+      initialHour={pickerInitH}
+      initialMinute={pickerInitM}
+      initialAmPm={pickerInitAP}
+      label={pickerTarget === 'from' ? 'Set start time' : 'Set end time'}
+    />
     </>
   );
 }

@@ -37,6 +37,7 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
   const fallbackHeight = Math.max(1, windowHeight - insets.top - insets.bottom - tabBarHeight - headerHeight);
   const [pageHeight, setPageHeight] = useState(fallbackHeight);
   const listRef = useRef(null);
+  const scrollStartY = useRef(0);
 
   // Respond to length changes even if the array reference is stable
   const source = useMemo(() => (Array.isArray(boards) ? boards : []), [boards, boards?.length]);
@@ -110,6 +111,30 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
     });
   }, [currentIdx, source, onIndexChange]);
 
+  // --- Instagram / TikTok-style swipe logic ---
+  const DISTANCE_THRESHOLD = 0.10; // 30% of page height
+  const VELOCITY_THRESHOLD = 100; // px/s  – treat as flick
+
+  const onBeginDrag = useCallback((e) => {
+    scrollStartY.current = e.nativeEvent.contentOffset.y;
+  }, []);
+
+  const onEndDrag = useCallback((e) => {
+    const endY = e.nativeEvent.contentOffset.y;
+    const delta = endY - scrollStartY.current;           // positive = scroll down (swipe up)
+    const fraction = Math.abs(delta) / pageHeight;
+    const velocity = Math.abs(e.nativeEvent.velocity?.y ?? 0);
+
+    const shouldAdvance = delta > 0 && (fraction >= DISTANCE_THRESHOLD || velocity >= VELOCITY_THRESHOLD);
+
+    if (shouldAdvance && source.length > 0) {
+      listRef.current?.scrollToOffset({ offset: pageHeight, animated: true });
+    } else {
+      // snap back to current page
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }
+  }, [pageHeight, source.length]);
+
   const onScrollEnd = useCallback((e) => {
     const y = e.nativeEvent.contentOffset.y;
     const page = Math.round(y / pageHeight);
@@ -143,7 +168,6 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
         renderItem={renderItem}
         getItemLayout={getItemLayout}
         style={{ flex: 1 }}
-        pagingEnabled
         decelerationRate="fast"
         disableIntervalMomentum={true}
         removeClippedSubviews={transitionMode !== 'preload'}
@@ -153,6 +177,9 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
         windowSize={3}
         showsVerticalScrollIndicator={false}
         bounces={true}
+        scrollEnabled={true}
+        onScrollBeginDrag={onBeginDrag}
+        onScrollEndDrag={onEndDrag}
         onMomentumScrollEnd={onScrollEnd}
       />
     </View>
