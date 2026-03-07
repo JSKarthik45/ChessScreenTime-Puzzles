@@ -93,6 +93,10 @@ export default function BoardPanel({
   const lastPanelTap = useRef(0);
   const [solved, setSolved] = useState(false); // ensure daily counter increments only once per puzzle
   const [moveAttempted, setMoveAttempted] = useState(false); // true after any move (correct or incorrect)
+  const [boardDisabled, setBoardDisabled] = useState(false);
+  const chessRef = useRef(null);
+  const correctMovesRef = useRef([]);
+  const moveIndexRef = useRef(0);
   const swipeHintBounce = useRef(new Animated.Value(0)).current;
 
   // Reset per-puzzle local state when the board changes
@@ -103,8 +107,36 @@ export default function BoardPanel({
     setMoveAttempted(false);
     setBannerVariant('default');
     setBannerText(text);
+    setBoardDisabled(false);
     swipeHintBounce.setValue(0);
   }, [boardId, text, initialLiked, initialShared, fen]);
+
+  // Multi-move puzzle: parse moves and auto-play the first (computer) move
+  React.useEffect(() => {
+    const moves = correctMove ? correctMove.trim().split(/\s+/) : [];
+    correctMovesRef.current = moves;
+    moveIndexRef.current = 0;
+    if (moves.length === 0) return;
+    setBoardDisabled(true);
+    const timer = setTimeout(() => {
+      if (chessRef.current) {
+        chessRef.current.makeMove(moves[0]);
+        moveIndexRef.current = 1;
+        if (moves.length <= 1) {
+          setSolved(true);
+          incrementTodayPuzzleCount().then(() => cancelIfGoalMet()).catch(() => {});
+          try { if (onMarkViewed && boardId != null) onMarkViewed(boardId); } catch {}
+          setBannerVariant('correct');
+          setBannerText('Correct');
+          setMoveAttempted(true);
+          startSwipeHintBounce();
+        } else {
+          setBoardDisabled(false);
+        }
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [boardId, fen, correctMove]);
 
   const triggerBigHeart = () => {
     setShowBigHeart(true);
@@ -195,37 +227,81 @@ export default function BoardPanel({
   };*/
 
   const evaluateMove = (move) => {
-    if (!move || !move.san) return;
-    const isCorrect = !correctMove || move.san === correctMove;
-    if (isCorrect) {
+    if (!move || !move.san || boardDisabled) return;
+    const moves = correctMovesRef.current;
+    const idx = moveIndexRef.current;
+
+    // No solution defined – accept any move
+    if (moves.length === 0) {
       if (!solved) {
         setSolved(true);
-        // Increment today's solved puzzle counter for streak tracking
         incrementTodayPuzzleCount().then(() => cancelIfGoalMet()).catch(() => {});
         try { if (onMarkViewed && boardId != null) onMarkViewed(boardId); } catch {}
       }
       setBannerVariant('correct');
       setBannerText('Correct');
       setMoveAttempted(true);
-      // Start swipe-up hint bounce animation
+      setBoardDisabled(true);
       startSwipeHintBounce();
-      //playCorrectSound();
-    } else {
+      return;
+    }
+
+    const expectedSan = moves[idx];
+    const isCorrect = move.san === expectedSan;
+
+    if (!isCorrect) {
       setBannerVariant('incorrect');
       setBannerText('Incorrect');
       setMoveAttempted(true);
+      setBoardDisabled(true);
       triggerShake();
       startSwipeHintBounce();
       try { Vibration.vibrate(120); } catch {}
+      return;
     }
-    // No automatic advance unless explicitly enabled
-    if (autoAdvance && onAdvance) {
-      setTimeout(() => {
-        onAdvance();
-        setBannerVariant('default');
-        setBannerText(text);
-      }, 2500);
+
+    // Correct move
+    const nextIdx = idx + 1;
+    moveIndexRef.current = nextIdx;
+
+    if (nextIdx >= moves.length) {
+      // All moves completed
+      if (!solved) {
+        setSolved(true);
+        incrementTodayPuzzleCount().then(() => cancelIfGoalMet()).catch(() => {});
+        try { if (onMarkViewed && boardId != null) onMarkViewed(boardId); } catch {}
+      }
+      setBannerVariant('correct');
+      setBannerText('Correct');
+      setMoveAttempted(true);
+      setBoardDisabled(true);
+      startSwipeHintBounce();
+      return;
     }
+
+    // More moves remain – auto-play computer's next move
+    setBoardDisabled(true);
+    setTimeout(() => {
+      if (chessRef.current) {
+        chessRef.current.makeMove(moves[nextIdx]);
+        const afterAutoIdx = nextIdx + 1;
+        moveIndexRef.current = afterAutoIdx;
+        if (afterAutoIdx >= moves.length) {
+          // Computer's move was the last
+          if (!solved) {
+            setSolved(true);
+            incrementTodayPuzzleCount().then(() => cancelIfGoalMet()).catch(() => {});
+            try { if (onMarkViewed && boardId != null) onMarkViewed(boardId); } catch {}
+          }
+          setBannerVariant('correct');
+          setBannerText('Correct');
+          setMoveAttempted(true);
+          startSwipeHintBounce();
+        } else {
+          setBoardDisabled(false);
+        }
+      }
+    }, 400);
   };
 
   const triggerShake = () => {
@@ -270,10 +346,12 @@ export default function BoardPanel({
     >
       <View style={styles.boardCenter}>
         <ChessBoard
+          ref={chessRef}
           fen={effectiveFen}
           size={boardSize}
           borderRadius={borderRadius}
           onMove={evaluateMove}
+          disabled={boardDisabled}
         />
       </View>
       <View style={[

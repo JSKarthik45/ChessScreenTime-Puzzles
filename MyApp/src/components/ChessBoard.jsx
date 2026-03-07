@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, Pressable } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { getChessBoardColors } from '../theme/colors';
@@ -25,7 +25,7 @@ const iconNameFromType = {
   k: 'chess-king',
 };
 
-export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0, onMove }) {
+const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, borderRadius = 0, onMove, disabled = false }, ref) {
   const squareSize = size / 8;
   const boardColors = getChessBoardColors();
   const dark = boardColors.darkSquare;
@@ -75,8 +75,22 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
     })));
   };
 
+  useImperativeHandle(ref, () => ({
+    makeMove: (san) => {
+      if (!game) return null;
+      let moveObj = null;
+      try {
+        moveObj = game.move(san);
+      } catch (e) { /* invalid */ }
+      if (moveObj) {
+        refreshBoard();
+      }
+      return moveObj;
+    },
+  }), [game]);
+
   const onSquarePress = useCallback((r, c) => {
-    if (!game) return;
+    if (!game || disabled) return;
     const square = algebraicFromRC(r, c);
     const piece = game.get(square);
 
@@ -112,7 +126,7 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
       setSelected(null);
       setLegalTargets([]);
     }
-  }, [game, selected, legalTargets]);
+  }, [game, selected, legalTargets, disabled]);
 
   // Reload board when incoming fen prop changes (avoid redundant reloads)
   const lastLoadedFenRef = React.useRef(null);
@@ -201,4 +215,6 @@ export default function ChessBoard({ fen = 'start', size = 320, borderRadius = 0
     </View>
     </View>
   );
-}
+});
+
+export default ChessBoard;
