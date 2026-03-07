@@ -64,6 +64,7 @@ export default function BoardPanel({
   autoAdvance = false,
   boardId,
   onMarkViewed,
+  isActive = true,
 }) {
   const [liked, setLiked] = useState(initialLiked);
   const [shared, setShared] = useState(initialShared);
@@ -78,8 +79,11 @@ export default function BoardPanel({
   const boardSize = Math.min(windowWidth, targetHeight);
   const boardTop = (availableHeight - boardSize) / 2; // centered board top within root
   const bannerWidth = boardSize - 24;
-  const bannerEstimatedHeight = 40; // approx banner height
-  const bannerTop = Math.max(boardTop - bannerEstimatedHeight - 6, 0);
+  // Anchor banner bottom just above the board top, so multi-line text expands upward
+  const bannerBottom = (availableHeight + boardSize + 100) / 2 + 6;
+
+  // Flip board when it's black's turn to play
+  const flipped = typeof turnText === 'string' && turnText.toLowerCase().includes('black');
 
   // Big heart animation overlay
   const bigHeartScale = useRef(new Animated.Value(0)).current;
@@ -117,6 +121,11 @@ export default function BoardPanel({
     correctMovesRef.current = moves;
     moveIndexRef.current = 0;
     if (moves.length === 0) return;
+    // Only auto-play the first move when this panel is the active/visible one
+    if (!isActive) {
+      setBoardDisabled(true);
+      return;
+    }
     setBoardDisabled(true);
     const timer = setTimeout(() => {
       if (chessRef.current) {
@@ -136,7 +145,7 @@ export default function BoardPanel({
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [boardId, fen, correctMove]);
+  }, [boardId, fen, correctMove, isActive]);
 
   const triggerBigHeart = () => {
     setShowBigHeart(true);
@@ -352,12 +361,13 @@ export default function BoardPanel({
           borderRadius={borderRadius}
           onMove={evaluateMove}
           disabled={boardDisabled}
+          flipped={flipped}
         />
       </View>
       <View style={[
         styles.bannerOverlay,
         {
-          top: bannerTop,
+          bottom: bannerBottom,
           width: bannerWidth,
           left: (windowWidth - bannerWidth) / 2,
           backgroundColor: bannerVariant === 'correct' ? colors.success : bannerVariant === 'incorrect' ? colors.error : colors.surface,

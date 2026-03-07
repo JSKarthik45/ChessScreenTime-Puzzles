@@ -25,7 +25,7 @@ const iconNameFromType = {
   k: 'chess-king',
 };
 
-const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, borderRadius = 0, onMove, disabled = false }, ref) {
+const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, borderRadius = 0, onMove, disabled = false, flipped = false }, ref) {
   const squareSize = size / 8;
   const boardColors = getChessBoardColors();
   const dark = boardColors.darkSquare;
@@ -195,9 +195,10 @@ const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, b
   return (
     <View style={{ opacity: 0.99 }}>
     <View style={{ width: size, height: size, borderRadius, overflow: 'hidden', backgroundColor: boardColors.frame, borderWidth: 0, borderColor: boardColors.border }}>
-      {boardData.map((rank, r) => (
+      {(flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7]).map((r) => (
         <View key={`r-${r}`} style={{ flexDirection: 'row' }}>
-          {rank.map((sq, c) => {
+          {(flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7]).map((c) => {
+            const sq = boardData[r][c];
             const isDark = (r + c) % 2 === 1;
             const bg = isDark ? dark : light;
             return (

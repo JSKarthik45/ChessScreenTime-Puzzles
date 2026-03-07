@@ -8,7 +8,7 @@ const EMPTY_FEN = '8/8/8/8/8/8/8/8 w - - 0 1';
 
 // We will preload the NEXT board instead of a blank transition
 
-const PageItem = memo(function PageItem({ item, height, onAdvance }) {
+const PageItem = memo(function PageItem({ item, height, onAdvance, isActive }) {
   const board = item.board || {};
   return (
     <View style={{ height, overflow: 'hidden' }}>
@@ -24,6 +24,7 @@ const PageItem = memo(function PageItem({ item, height, onAdvance }) {
         autoAdvance={false}
         boardId={board.key}
         onMarkViewed={null}
+        isActive={isActive}
       />
     </View>
   );
@@ -84,7 +85,7 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
   }, [pageHeight, source.length]);
 
   const renderItem = useCallback(({ item }) => (
-    <PageItem item={item} height={pageHeight} onAdvance={advance} />
+    <PageItem item={item} height={pageHeight} onAdvance={advance} isActive={item.slotKey === 'slot-0'} />
   ), [pageHeight, advance]);
   const getItemLayout = useCallback((_, index) => ({ length: pageHeight, offset: pageHeight * index, index }), [pageHeight]);
 
@@ -112,8 +113,7 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
   }, [currentIdx, source, onIndexChange]);
 
   // --- Instagram / TikTok-style swipe logic ---
-  const DISTANCE_THRESHOLD = 0.10; // 30% of page height
-  const VELOCITY_THRESHOLD = 100; // px/s  – treat as flick
+  const DISTANCE_THRESHOLD = 0.05; // 10% of page height
 
   const onBeginDrag = useCallback((e) => {
     scrollStartY.current = e.nativeEvent.contentOffset.y;
@@ -123,9 +123,8 @@ export default function BoardPager({ boards, transitionMode = 'blank', onIndexCh
     const endY = e.nativeEvent.contentOffset.y;
     const delta = endY - scrollStartY.current;           // positive = scroll down (swipe up)
     const fraction = Math.abs(delta) / pageHeight;
-    const velocity = Math.abs(e.nativeEvent.velocity?.y ?? 0);
 
-    const shouldAdvance = delta > 0 && (fraction >= DISTANCE_THRESHOLD || velocity >= VELOCITY_THRESHOLD);
+    const shouldAdvance = delta > 0 && fraction >= DISTANCE_THRESHOLD;
 
     if (shouldAdvance && source.length > 0) {
       listRef.current?.scrollToOffset({ offset: pageHeight, animated: true });
