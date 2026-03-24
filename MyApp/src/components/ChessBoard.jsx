@@ -61,6 +61,7 @@ const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, b
       return (cell.color === 'w' ? 'w' : 'b') + cell.type.toUpperCase();
     }));
   });
+  const [lastMove, setLastMove] = useState(null); // { from, to }
   const [selected, setSelected] = useState(null); // { r, c, square }
   const [legalTargets, setLegalTargets] = useState([]); // ['e4','e5'] etc.
 
@@ -83,6 +84,7 @@ const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, b
         moveObj = game.move(san);
       } catch (e) { /* invalid */ }
       if (moveObj) {
+        setLastMove({ from: moveObj.from, to: moveObj.to });
         refreshBoard();
       }
       return moveObj;
@@ -109,6 +111,9 @@ const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, b
       } catch (e) { /* invalid move ignore */ }
       setSelected(null);
       setLegalTargets([]);
+      if (moveObj) {
+        setLastMove({ from: moveObj.from, to: moveObj.to });
+      }
       refreshBoard();
       if (moveObj && onMove) {
         // Provide minimal move payload (SAN + from/to)
@@ -142,6 +147,7 @@ const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, b
     lastLoadedFenRef.current = fen;
     setSelected(null);
     setLegalTargets([]);
+    setLastMove(null);
     refreshBoard();
   }, [fen, game]);
 
@@ -149,9 +155,14 @@ const ChessBoard = forwardRef(function ChessBoard({ fen = 'start', size = 320, b
     const squareAlg = algebraicFromRC(r, c);
     const isSelected = selected && selected.square === squareAlg;
     const isLegal = legalTargets.includes(squareAlg);
+    const isLastFrom = lastMove && lastMove.from === squareAlg;
+    const isLastTo = lastMove && lastMove.to === squareAlg;
     const iconSize = squareSize * 0.80;
     return (
       <>
+        {(isLastFrom || isLastTo) && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: highlightColor, opacity: isLastTo ? 0.32 : 0.2 }} />
+        )}
         {sq ? (
           <View style={{ padding: squareSize * 0.05, alignItems: 'center', justifyContent: 'center' }}>
             {/* Background "Outline" Icon */}
